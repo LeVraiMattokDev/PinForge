@@ -1,27 +1,374 @@
-// PinForge project format - PROPOSAL for review, format version 1
-// ---------------------------------------------------------------
-// This file is annotated JSONC. The real format is plain JSON with no comments.
-// One game = one file, named `game.pinforge.json`, sitting next to an `assets/` folder.
-//
-// The example below is a complete, playable platformer: a player, three coins,
-// one patrolling enemy, spikes, a flag, a score counter and a win condition.
-// It is deliberately written the way a human would type it, because phase 2 of the
-// plan is to hand author exactly this kind of file. If any part of it is annoying
-// to type or hard to read, that is a format bug and should be fixed now.
-//
-// Conventions used everywhere in the format:
-//   - Units are pixels. Time is seconds. Speed is pixels per second,
-//     acceleration is pixels per second squared.
-//   - The Y axis points DOWN. y = 0 is the top of the scene. This matches both the
-//     canvas and the tile grid, so there is never a flip to reason about.
-//   - An entity's x and y are the TOP LEFT corner of its collision box.
-//     Sprites are aligned to that box with `offset`, so art can overhang the box.
-//   - Every id is a lowercase slug matching ^[a-z0-9][a-z0-9-]*$ and is stable.
-//     Ids are what the editor, the event rules and the MCP server refer to.
-//     `name` is the human label shown in the editor and can be anything.
-//   - Unknown keys are rejected. A typo like "colour" is an error with a readable
-//     message, not a silently ignored field.
+# The project format
 
+A PinForge game is one JSON file, named `game.pinforge.json`, sitting next to a
+folder of images and sounds. Everything the game is lives in that file: its
+settings, its levels, the things in them and the rules that make them behave.
+There is no second format and no hidden state. The editor writes this file, the
+runtime reads it, the exporter inlines its assets into an HTML page, and the MCP
+server edits it through the same validation the editor uses.
+
+This page is the authoritative description of the format. The machine readable
+version is generated from the same definitions and lives at
+[`packages/schema/schema/pinforge-project.schema.json`](../packages/schema/schema/pinforge-project.schema.json).
+
+## Conventions
+
+These hold everywhere, so they are stated once.
+
+- **Units.** Distances are pixels, time is seconds, speed is pixels per second,
+  acceleration is pixels per second squared.
+- **Axes.** The Y axis points down. `y: 0` is the top of the scene. This matches
+  both the canvas and the tile grid, so nothing is ever flipped.
+- **Position.** An entity's `x` and `y` are the top left corner of its collision
+  box. Art is aligned to that box with the sprite's `offset`, so a drawing may
+  overhang the box it collides with.
+- **Ids and names.** An `id` is lowercase letters, numbers and dashes, and is
+  what rules, the editor and the MCP server refer to. A `name` is a label for
+  people to read and can be anything.
+- **Defaults.** Anything with a default may be left out of the file. Opening a
+  project fills them in, so a hand written file stays short and the runtime
+  always sees a complete project.
+- **Unknown keys are errors.** A misspelled `colour` is reported with its
+  location rather than silently ignored.
+
+## The top level
+
+| Field | Required | What it is |
+| --- | --- | --- |
+| `formatVersion` | yes | The version of this format the file was written in. Currently `1`. |
+| `meta` | yes | Name, author, description and timestamps. |
+| `settings` | yes | Which scene the game starts on, the resolution, the controls. |
+| `variables` | no | Global variables such as score and lives. |
+| `assets` | no | Every image and sound the game uses. |
+| `tilesets` | no | How tile images are sliced up, and what each tile means. |
+| `entities` | no | Entity prototypes: the kinds of thing that can exist. |
+| `globalEvents` | no | Rules that run in every scene. |
+| `scenes` | yes, at least one | The levels. |
+
+## settings
+
+```json
+{
+  "startScene": "level-1",
+  "viewport": { "width": 320, "height": 180, "scaleMode": "integer" },
+  "pixelArt": true,
+  "backgroundColor": "#10141c",
+  "input": { "jump": ["Space", "ArrowUp"] }
+}
+```
+
+The game renders at exactly `viewport` size and is then scaled up to the window.
+`integer` scaling only ever multiplies by a whole number, which keeps pixel art
+crisp; `fit` allows any scale and adds bars; `stretch` ignores the window shape.
+
+`input` names the controls. Rules and movement components talk about `"jump"`,
+never about `"Space"`, so rebinding a key is a settings change and the editor can
+say "when Jump is pressed". The values are
+[`KeyboardEvent.code`](https://developer.mozilla.org/docs/Web/API/UI_Events/Keyboard_event_code_values)
+strings.
+
+## variables
+
+A global variable is a number, a true or false value, or a line of text, with a
+starting value.
+
+```json
+{ "id": "score", "name": "Score", "type": "number", "initial": 0 }
+```
+
+The type and the starting value are checked together, so `"type": "number"` with
+`"initial": "hello"` is an error rather than a surprise later. Per entity state
+lives in an entity's `properties`, which use exactly the same shape.
+
+## assets
+
+One flat list, each entry an image or a sound.
+
+```json
+[
+  { "id": "hero", "kind": "image", "source": "assets/hero.png" },
+  { "id": "sfx-coin", "kind": "sound", "source": "assets/coin.wav", "volume": 0.8 }
+]
+```
+
+`source` takes three forms, and every tool understands all of them:
+
+- `assets/hero.png` — a path relative to the project file.
+- `data:image/png;base64,...` — the bytes inlined. The browser editor writes this
+  because it has no filesystem, and the HTML export inlines every asset this way.
+  Export is therefore a transformation of this format, not a second format.
+- `builtin:grass` — an asset from the starter pack shipped with PinForge.
+
+## tilesets
+
+A tileset slices one image into a numbered grid, counting from 0, left to right
+then top to bottom.
+
+```json
+{
+  "id": "grass",
+  "image": "tiles-grass",
+  "tileWidth": 16,
+  "tileHeight": 16,
+  "tiles": [
+    { "index": 0, "name": "Ground", "tags": ["solid"] },
+    { "index": 8, "name": "Spikes", "tags": ["hazard"] }
+  ]
+}
+```
+
+Only tiles that need a name or a tag are listed; everything else in the image is
+plain decoration.
+
+**Tile behaviour comes from tags, never from a tile number.** The runtime knows
+three: `solid` stops things, `one-way` can be jumped through from below, `hazard`
+is reported to rules. Any other tag is free form and exists so a project can
+invent `ice` or `water` and react to it with a rule, without the engine changing.
+
+## entities
+
+An entity prototype is the definition of a kind of thing. A scene places copies
+of it, and editing the prototype changes every copy.
+
+```json
+{
+  "id": "player",
+  "name": "Player",
+  "size": { "width": 12, "height": 16 },
+  "tags": ["player"],
+  "properties": [{ "id": "hits-left", "type": "number", "initial": 3 }],
+  "components": {}
+}
+```
+
+`size` is the collision box. Boxes are always axis aligned and never rotate,
+which is what keeps collision predictable and fast.
+
+### Components
+
+An entity carries at most one of each. There are four, and the set is small on
+purpose.
+
+**`sprite`** draws it: an `image`, the size of one frame in that image, an
+`offset` from the collision box, and a list of `animations` naming frame numbers
+and a speed. `flipToFaceMovement` mirrors the art when moving left so only one
+direction has to be drawn.
+
+**`collider`** decides how it touches things. `solid` is pushed out of what it
+hits, `trigger` passes through and only reports overlaps to rules, `none` never
+collides. `collidesWithTiles` turns tile collision on or off separately.
+
+**`movement`** is the only real difference between 2D genres, and the reason
+there is one runtime rather than one per genre. It has two modes.
+
+`platform` has gravity, ground detection and jumping:
+
+```json
+{
+  "mode": "platform",
+  "controlledBy": "player",
+  "maxSpeed": 90,
+  "acceleration": 600,
+  "deceleration": 900,
+  "airControl": 0.7,
+  "gravity": 900,
+  "fallGravityMultiplier": 1.7,
+  "maxFallSpeed": 320,
+  "jumpHeight": 44,
+  "jumpCount": 1,
+  "variableJumpHeight": true,
+  "coyoteTime": 0.1,
+  "jumpBufferTime": 0.12
+}
+```
+
+Three of those fields are why a jump feels solid rather than broken, and they are
+on by default with working values so that nobody has to know they exist:
+`fallGravityMultiplier` makes falling faster than rising, `coyoteTime` still
+allows a jump just after walking off a ledge, and `jumpBufferTime` remembers a
+jump pressed just before landing.
+
+A jump is authored as a height in pixels, not as an impulse. "Clear three tiles"
+is a thought a beginner can have; "start at minus 280 pixels per second" is not.
+The runtime works out the impulse from the height and the gravity.
+
+`controlledBy` is `player`, meaning the entity reads the named controls itself, or
+`rules`, meaning only event rules move it. There is no third option and no
+scripting. An optional `patrol` block makes an entity walk back and forth on its
+own, turning at walls and at ledges, which is what most simple enemies need.
+
+`free` moves on both axes with no gravity, and is what a puzzle game or a
+shoot-em-up uses. It is part of the format from version 1 so that projects do not
+change when it ships, but the runtime does not implement it yet.
+
+**`text`** draws a line of text instead of a sprite, in a built in font.
+`{score}` inside `content` is replaced by the value of that variable, which is
+how a score gets on screen. An entity has a sprite or text, not both.
+
+## scenes
+
+A scene is one level.
+
+```json
+{
+  "id": "level-1",
+  "tileSize": 16,
+  "size": { "columns": 32, "rows": 10 },
+  "background": { "color": "#10141c" },
+  "layers": [],
+  "entities": [],
+  "camera": { "mode": "fixed" },
+  "events": []
+}
+```
+
+`tileSize` applies to the whole scene, so there is one number to think about
+rather than one per layer, and a tileset built on a different grid cannot be used
+here. `size` is in tiles.
+
+### Tile layers
+
+A tile layer is a picture you can read. `legend` says what each character means,
+and `rows` is the level itself, one string per row.
+
+```json
+{
+  "id": "ground",
+  "tileset": "grass",
+  "collides": true,
+  "legend": { ".": null, "#": 0, "^": 8 },
+  "rows": ["........", "..^^....", "########"]
+}
+```
+
+`null` in the legend means an empty cell. Every row must be exactly as long as
+the scene is wide, and there must be exactly as many rows as the scene is tall.
+
+A grid of numbers would store the same thing, and nobody could read it. That
+matters because levels are written by hand in the examples and by an assistant
+over MCP. The cost is that a legend key is a single printable character, so one
+layer holds at most 94 distinct tiles; extra layers are free.
+
+Layers are drawn in the order they are listed. `drawEntitiesAfter` marks the
+layer that entities are drawn on top of, so anything listed after it appears in
+front of them. `parallax` scrolls a layer slower than the world for a cheap sense
+of depth, and `collides` decides whether its solid tiles stop anything.
+
+### Entity instances
+
+```json
+{
+  "id": "slime-1",
+  "prototype": "slime",
+  "x": 200,
+  "y": 132,
+  "overrides": { "movement": { "maxSpeed": 16 } }
+}
+```
+
+`overrides` is a patch over the prototype's components, so one slower slime does
+not need a second prototype. Only the fields written are changed. An override
+cannot change a movement `mode`, and a field belonging to the other mode is an
+error.
+
+`properties` sets this copy's starting values for the properties its prototype
+declares. `fixedToCamera` keeps it still on screen instead of scrolling with the
+level, which is what a score label needs. `tags` adds tags to this copy only.
+
+### Camera
+
+Three modes, all with optional `clampToScene` so the view never leaves the level.
+
+- `follow` tracks an entity. `deadZone` is a box in the middle of the screen the
+  target can move inside without the camera moving at all, which is what stops
+  the picture wobbling on every step. `smoothing` is how gently it catches up.
+- `fixed` sits at one position.
+- `auto-scroll` moves at a constant speed, for a shoot-em-up.
+
+### Events
+
+Rules are data in the scene, not generated code, which is what lets the editor,
+the runtime and the MCP server all agree on what a game does. Each one reads as a
+sentence:
+
+```json
+{
+  "id": "collect-coin",
+  "name": "Collect a coin",
+  "when": { "type": "collides", "subject": "player", "with": "coin" },
+  "if": [],
+  "then": [
+    { "type": "change-variable", "variable": "score", "operator": "add", "value": 1 },
+    { "type": "destroy", "target": "$other" }
+  ]
+}
+```
+
+`if` is joined by "and"; an empty list means always. `then` runs in order.
+`enabled` turns a rule off without deleting it, and `once` runs it at most once
+per scene.
+
+Entities are pointed at with one string:
+
+| Written | Means |
+| --- | --- |
+| `$self` | The entity the trigger fired on. |
+| `$other` | The other entity in a collision. |
+| `tag:enemy` | Anything carrying that tag. |
+| `player-1` | That copy, in this scene. |
+| `coin` | Any entity of that kind. |
+
+A copy is looked up before a kind, and a project where a copy's id is also the
+name of a kind is refused, so the order can never surprise anyone. Using `$other`
+in a rule that is not about two things touching is an error, as is `$self` in a
+rule that is not about one entity.
+
+Rules that put in `globalEvents` at the top level run in every scene, which is
+where pause and game over belong rather than copied into each level.
+
+Every trigger, condition and action is listed in
+[the events reference](events-reference.md).
+
+## Format versions and migrations
+
+Every file carries `formatVersion`. `packages/schema` owns a chain of migrations
+keyed on it, so a project written today still opens in a much later version. The
+chain is empty right now, because version 1 is the first format, but the runner
+and its tests exist already: the day a migration is needed is the worst day to
+find out the runner does not work.
+
+Opening a file runs migrations first, then structure, then meaning. A file from a
+newer PinForge is refused with a message saying so rather than half read.
+
+## How a file is checked
+
+Two passes, kept apart on purpose.
+
+**Structure** is types, required fields, ranges and unknown keys. It is generated
+from the same definitions as the JSON Schema, and it fails on the first
+impossible document with a list of what is wrong and where.
+
+**Meaning** is everything that needs the rest of the file: does the scene the
+game starts on exist, is that character in the legend, does that rule ask a coin
+whether it is standing on the ground. This pass returns a list rather than
+throwing, so the editor can show ten problems at once and the MCP server can
+refuse a change with all of the reasons instead of the first one. Each problem
+has a path into the document, a stable code and a sentence written for a person:
+
+```
+/scenes/0/layers/0/rows/1: Row 1 of the layer "ground" is 3 characters long, but this level is 4 tiles wide.
+```
+
+## A complete game
+
+This is a real project file: a player, three coins, a patrolling slime, spikes, a
+flag, a score and a win condition. Comments are for this page only; the format is
+plain JSON. The same file without comments is
+[`packages/schema/test/golden/coin-run.json`](../packages/schema/test/golden/coin-run.json),
+and the test suite loads the example below on every run so it cannot drift from
+what the code accepts.
+
+```jsonc
 {
   // Bumped only when the format changes shape. packages/schema owns a migration
   // chain keyed on this number, so a file written today opens in two years.
@@ -245,9 +592,8 @@
           "variableJumpHeight": false,
           "coyoteTime": 0,
           "jumpBufferTime": 0,
-          // Walks by itself. Without this, every patrolling enemy needs two event
-          // rules and a wall detection trigger, which is a lot of ceremony for the
-          // most common enemy in 2D games. See open question 3.
+          // Walks by itself. Without this, every patrolling enemy would need two
+          // event rules and a wall detection trigger.
           "patrol": { "direction": "left", "turnAtWalls": true, "turnAtLedges": true }
         }
       }
@@ -345,9 +691,8 @@
           // string must be exactly `columns` characters long, and there must be
           // exactly `rows` of them.
           //
-          // The alternative is a grid of numbers, which nobody can read and which
-          // an assistant writing a level over MCP cannot reason about. See open
-          // question 1: this choice caps a single layer at 94 distinct tiles.
+          // A legend key is one printable character, so a single layer holds at
+          // most 94 distinct tiles. Extra layers are free.
           "legend": { ".": null, "c": 12 },
           "rows": [
             "................................",
@@ -562,102 +907,4 @@
     }
   ]
 }
-
-// ---------------------------------------------------------------------------
-// The rule vocabulary this format assumes. Each entry is a `type` value plus its
-// own fields, validated as a discriminated union. Every one is tagged with the
-// movement modes it applies to, so the editor can filter.
-//
-// TRIGGERS (13)
-//   game-starts                  once, when the game is first launched
-//   scene-starts                 every time a scene is entered or restarted
-//   every-frame                  once per simulation step
-//   every-seconds                on a repeating timer
-//   action-pressed               a named input action goes down
-//   action-released              a named input action goes up
-//   collides                     two entities begin overlapping
-//   collision-ends               two entities stop overlapping
-//   touches-tile                 an entity overlaps a tile carrying a tag
-//   variable-changes             a global variable is written
-//   entity-spawned               an entity of some kind appears
-//   entity-destroyed             an entity of some kind is removed
-//   leaves-scene                 an entity crosses an edge of the scene
-//   lands                        (platform only) an entity touches the ground
-//   jumps                        (platform only) an entity leaves the ground by jumping
-//   clicked                      the pointer presses on an entity
-//
-// CONDITIONS (10)
-//   variable-is                  compare a global variable
-//   property-is                  compare a custom property on an entity
-//   has-tag                      the entity carries a tag
-//   entity-exists                at least one entity of a kind is alive
-//   action-held                  a named input action is currently down
-//   distance-is                  two entities are nearer or further than N pixels
-//   chance                       succeeds N percent of the time
-//   current-scene-is             the running scene
-//   is-on-ground                 (platform only)
-//   is-falling                   (platform only)
-//   Every condition takes an optional "negate": true, so there is no separate
-//   "not on ground" entry cluttering the dropdown.
-//
-// ACTIONS (17)
-//   destroy                      remove an entity
-//   spawn                        create an entity of some kind at a position
-//   move                         set or add to an entity's velocity
-//   teleport                     put an entity at a position
-//   jump                         (platform only) make an entity jump, optional height
-//   set-variable / change-variable
-//   set-property / change-property
-//   play-animation               switch an entity's animation
-//   set-visible                  show or hide an entity
-//   play-sound / stop-sound
-//   show-message                 a short banner of text
-//   go-to-scene / restart-scene
-//   set-camera-target
-//   shake-camera
-//   set-tile                     paint or clear one tile at runtime, e.g. a door
-//   enable-rule / disable-rule   turn another rule on or off by id
-//   wait                         pause this rule's remaining actions for N seconds
-//
-// ---------------------------------------------------------------------------
-// OPEN QUESTIONS, listed in the order I care about them
-//
-// 1. Tile layers as pictures. `legend` plus `rows` of characters is readable,
-//    diffable and easy for a person or an assistant to write, which matters for
-//    phase 2 and for the MCP server. The cost is a hard cap of 94 distinct tiles
-//    per layer, since a legend key is one printable character. My view is that a
-//    beginner focused engine never needs more than that in one layer, and more
-//    layers are free. The alternative is a grid of numbers, unreadable but
-//    unbounded. Confirm the picture form, or say the word and I switch to numbers.
-//
-// 2. One file per game. Scenes live inside `game.pinforge.json` rather than in
-//    separate files. The editor saves one file, migrations run over one document,
-//    and MCP diffs one document. The cost is that a 30 scene project becomes a
-//    large file and two people cannot edit different levels without conflicting.
-//    Given the target user and no multiplayer or collaboration in scope, I think
-//    one file wins. Confirm.
-//
-// 3. Three additions to the minimum you described, each of which I believe the
-//    30 minute test needs:
-//      - `patrol` inside the platform movement component. Without it, the most
-//        common enemy in 2D games costs two event rules and a wall trigger.
-//      - a `text` component and `fixedToCamera` on instances, without which a
-//        score cannot be displayed and the score variable is pointless.
-//      - `globalEvents` at project level, so pause and game over are not copy
-//        pasted into every scene.
-//    Say if any of these should wait.
-//
-// 4. Migrations before there is anything to migrate. The plan says freeze the
-//    format early, but phase 2 is where hand authoring will expose its flaws.
-//    I would build the migration RUNNER and its golden file tests in phase 0 as
-//    planned, and keep the right to change version 1 freely until the example
-//    game in phase 2 plays. After that, every change costs a migration. This is a
-//    process point, not a format point, and I would rather agree it now.
-//
-// 5. Not a format question, but a gap in the plan worth naming early: the engine
-//    imports art and does not author it, which is correct, yet the 30 minute test
-//    starts with a user who has no PNG files. I suggest shipping a small CC0
-//    starter pack, a tileset and three characters, with the editor. Otherwise the
-//    first five minutes are spent hunting for sprites. Tell me if you want that in
-//    scope and I will keep a slot for it in the format via a "builtin:" source
-//    prefix on assets.
+```
