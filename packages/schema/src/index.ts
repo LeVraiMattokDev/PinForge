@@ -18,3 +18,6 @@ export * from './events/rules.js';
 export * from './events/catalog.js';
 export * from './scenes.js';
 export * from './project.js';
+export * from './errors.js';
+export * from './migrate.js';
+export * from './validate.js';
