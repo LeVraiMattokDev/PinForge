@@ -1,0 +1,32 @@
+{
+  "name": "@pinforge/schema",
+  "version": "0.0.0",
+  "description": "The PinForge project format: Zod definitions, validation, migrations and JSON Schema.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./pinforge-project.schema.json": "./schema/pinforge-project.schema.json"
+  },
+  "files": [
+    "dist",
+    "schema"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tools.json",
+    "test": "vitest run",
+    "generate": "tsx scripts/generate.ts"
+  },
+  "dependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3"
+  }
+}
