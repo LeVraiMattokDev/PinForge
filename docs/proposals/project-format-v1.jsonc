@@ -1,0 +1,663 @@
+// PinForge project format - PROPOSAL for review, format version 1
+// ---------------------------------------------------------------
+// This file is annotated JSONC. The real format is plain JSON with no comments.
+// One game = one file, named `game.pinforge.json`, sitting next to an `assets/` folder.
+//
+// The example below is a complete, playable platformer: a player, three coins,
+// one patrolling enemy, spikes, a flag, a score counter and a win condition.
+// It is deliberately written the way a human would type it, because phase 2 of the
+// plan is to hand author exactly this kind of file. If any part of it is annoying
+// to type or hard to read, that is a format bug and should be fixed now.
+//
+// Conventions used everywhere in the format:
+//   - Units are pixels. Time is seconds. Speed is pixels per second,
+//     acceleration is pixels per second squared.
+//   - The Y axis points DOWN. y = 0 is the top of the scene. This matches both the
+//     canvas and the tile grid, so there is never a flip to reason about.
+//   - An entity's x and y are the TOP LEFT corner of its collision box.
+//     Sprites are aligned to that box with `offset`, so art can overhang the box.
+//   - Every id is a lowercase slug matching ^[a-z0-9][a-z0-9-]*$ and is stable.
+//     Ids are what the editor, the event rules and the MCP server refer to.
+//     `name` is the human label shown in the editor and can be anything.
+//   - Unknown keys are rejected. A typo like "colour" is an error with a readable
+//     message, not a silently ignored field.
+
+{
+  // Bumped only when the format changes shape. packages/schema owns a migration
+  // chain keyed on this number, so a file written today opens in two years.
+  "formatVersion": 1,
+
+  "meta": {
+    "name": "Coin Run",
+    "author": "PinStudio",
+    "description": "A tiny platformer used to validate the project format.",
+    "created": "2026-08-20T10:00:00Z",
+    "modified": "2026-08-20T10:00:00Z"
+  },
+
+  "settings": {
+    "startScene": "level-1",
+
+    // The game renders at exactly this resolution, then scales up to fit the
+    // window. "integer" only ever scales by 1x, 2x, 3x... which keeps pixel art
+    // crisp. "fit" allows fractional scaling with letterboxing. "stretch" ignores
+    // the aspect ratio.
+    "viewport": { "width": 320, "height": 180, "scaleMode": "integer" },
+
+    // Nearest neighbour sampling. Turn off for smooth, hand drawn art.
+    "pixelArt": true,
+
+    "backgroundColor": "#10141c",
+
+    // Named actions, not raw keys. Every rule and every movement component talks
+    // about "jump", never about "Space". Rebinding is then a settings change and
+    // the editor can show "when Jump is pressed" instead of a key code.
+    // Values are KeyboardEvent.code strings.
+    "input": {
+      "left": ["ArrowLeft", "KeyA"],
+      "right": ["ArrowRight", "KeyD"],
+      "up": ["ArrowUp", "KeyW"],
+      "down": ["ArrowDown", "KeyS"],
+      "jump": ["Space", "ArrowUp", "KeyW"],
+      "action": ["KeyE", "Enter"],
+      "pause": ["Escape"]
+    }
+  },
+
+  // Global variables. Anything the whole game needs to remember: score, lives,
+  // whether a key was found. Per entity state lives in entity `properties` instead.
+  "variables": [
+    { "id": "score", "name": "Score", "type": "number", "initial": 0 },
+    { "id": "lives", "name": "Lives", "type": "number", "initial": 3 }
+  ],
+
+  // Flat list, discriminated by `kind`. `source` is either a path relative to this
+  // file, or a data: URI. The browser editor has no filesystem, so anything the
+  // user drops onto it is stored inline as a data URI; the CLI and hand authored
+  // projects use paths. The HTML export inlines everything as data URIs, which
+  // means export is a transformation of this same field and not a separate format.
+  "assets": [
+    { "id": "tiles-grass", "kind": "image", "source": "assets/tiles-grass.png" },
+    { "id": "player-sheet", "kind": "image", "source": "assets/player.png" },
+    { "id": "coin-sheet", "kind": "image", "source": "assets/coin.png" },
+    { "id": "slime-sheet", "kind": "image", "source": "assets/slime.png" },
+    { "id": "flag-sheet", "kind": "image", "source": "assets/flag.png" },
+    { "id": "sfx-jump", "kind": "sound", "source": "assets/jump.wav" },
+    { "id": "sfx-coin", "kind": "sound", "source": "assets/coin.wav" }
+  ],
+
+  // A tileset slices one image into a grid of numbered tiles, left to right then
+  // top to bottom starting at 0. Tags are what the runtime and the rules react to:
+  // no tile behaviour is hardcoded to a tile number.
+  // Engine understood tags: "solid", "one-way", "hazard". Any other tag is free
+  // form and can be used by rules, e.g. "ice" or "water".
+  "tilesets": [
+    {
+      "id": "grass",
+      "name": "Grass",
+      "image": "tiles-grass",
+      "tileWidth": 16,
+      "tileHeight": 16,
+      "margin": 0,
+      "spacing": 0,
+      // Only tiles that need a name or a tag are listed. Everything else in the
+      // image is a plain decorative tile.
+      "tiles": [
+        { "index": 0, "name": "Ground", "tags": ["solid"] },
+        { "index": 3, "name": "Wooden platform", "tags": ["one-way"] },
+        { "index": 8, "name": "Spikes", "tags": ["hazard"] },
+        { "index": 12, "name": "Cloud", "tags": [] }
+      ]
+    }
+  ],
+
+  // Entity prototypes. A prototype is the definition of a kind of thing; a scene
+  // places instances of it. Editing the prototype changes every coin in the game.
+  "entities": [
+    {
+      "id": "player",
+      "name": "Player",
+      // The collision box. AABB only, never rotated. Also the box the sprite is
+      // positioned against.
+      "size": { "width": 12, "height": 16 },
+      "tags": ["player"],
+      // Custom per entity state, editable in the inspector, readable by rules.
+      "properties": [
+        { "id": "invulnerable-for", "name": "Invulnerable for", "type": "number", "initial": 0 }
+      ],
+      // A small, fixed set of components. Each may appear at most once.
+      // Available: sprite, collider, movement, text.
+      "components": {
+        "sprite": {
+          "image": "player-sheet",
+          "frameWidth": 16,
+          "frameHeight": 16,
+          // Where the sprite sits relative to the top left of the collision box.
+          "offset": { "x": -2, "y": 0 },
+          // Mirror the art when moving left. Saves authoring a second animation.
+          "flipToFaceMovement": true,
+          "defaultAnimation": "idle",
+          "animations": [
+            { "id": "idle", "name": "Idle", "frames": [0, 1], "fps": 4, "loop": true },
+            { "id": "run", "name": "Run", "frames": [2, 3, 4, 5], "fps": 12, "loop": true },
+            { "id": "jump", "name": "Jump", "frames": [6], "fps": 1, "loop": false }
+          ]
+        },
+        "collider": {
+          // "solid"   - collides with tiles and pushes out of them
+          // "trigger" - passes through everything, only reports overlaps to rules
+          // "none"    - no collision at all, decoration
+          "kind": "solid",
+          "collidesWithTiles": true
+        },
+        "movement": {
+          // The one component that differs between genres. Two modes only.
+          // "platform" is implemented first; "free" is reserved for phase 4 and is
+          // in the schema now so the format does not change when it lands.
+          "mode": "platform",
+
+          // "player" means this entity reads the input actions above directly.
+          // "rules" means only event rules move it. There is no third option and
+          // no scripting.
+          "controlledBy": "player",
+
+          "maxSpeed": 90,
+          "acceleration": 600,
+          "deceleration": 900,
+          // How much of the acceleration applies while airborne, 0 to 1.
+          "airControl": 0.7,
+
+          "gravity": 900,
+          // Falling is faster than rising. This is the single biggest reason a
+          // platformer feels good rather than floaty, so it is on by default.
+          "fallGravityMultiplier": 1.7,
+          "maxFallSpeed": 320,
+
+          // Jump is authored as a HEIGHT IN PIXELS, not an impulse. "I want to
+          // clear three tiles" is a thought a beginner can have; "I want an
+          // initial velocity of -280 px/s" is not. The runtime derives the
+          // impulse from jumpHeight and gravity.
+          "jumpHeight": 44,
+          "jumpCount": 1,
+          // Releasing the button early cuts the jump short.
+          "variableJumpHeight": true,
+          // Jump still works for this long after walking off a ledge.
+          "coyoteTime": 0.1,
+          // A jump pressed this long before landing still fires on landing.
+          "jumpBufferTime": 0.12
+        }
+      }
+    },
+
+    {
+      "id": "coin",
+      "name": "Coin",
+      "size": { "width": 8, "height": 8 },
+      "tags": ["pickup"],
+      "properties": [],
+      "components": {
+        "sprite": {
+          "image": "coin-sheet",
+          "frameWidth": 8,
+          "frameHeight": 8,
+          "offset": { "x": 0, "y": 0 },
+          "flipToFaceMovement": false,
+          "defaultAnimation": "spin",
+          "animations": [
+            { "id": "spin", "name": "Spin", "frames": [0, 1, 2, 3], "fps": 8, "loop": true }
+          ]
+        },
+        "collider": { "kind": "trigger", "collidesWithTiles": false }
+      }
+    },
+
+    {
+      "id": "slime",
+      "name": "Slime",
+      "size": { "width": 14, "height": 12 },
+      "tags": ["enemy"],
+      "properties": [],
+      "components": {
+        "sprite": {
+          "image": "slime-sheet",
+          "frameWidth": 16,
+          "frameHeight": 16,
+          "offset": { "x": -1, "y": -4 },
+          "flipToFaceMovement": true,
+          "defaultAnimation": "walk",
+          "animations": [
+            { "id": "walk", "name": "Walk", "frames": [0, 1], "fps": 6, "loop": true }
+          ]
+        },
+        "collider": { "kind": "solid", "collidesWithTiles": true },
+        "movement": {
+          "mode": "platform",
+          "controlledBy": "rules",
+          "maxSpeed": 24,
+          "acceleration": 400,
+          "deceleration": 400,
+          "airControl": 1,
+          "gravity": 900,
+          "fallGravityMultiplier": 1.7,
+          "maxFallSpeed": 320,
+          "jumpHeight": 0,
+          "jumpCount": 0,
+          "variableJumpHeight": false,
+          "coyoteTime": 0,
+          "jumpBufferTime": 0,
+          // Walks by itself. Without this, every patrolling enemy needs two event
+          // rules and a wall detection trigger, which is a lot of ceremony for the
+          // most common enemy in 2D games. See open question 3.
+          "patrol": { "direction": "left", "turnAtWalls": true, "turnAtLedges": true }
+        }
+      }
+    },
+
+    {
+      "id": "flag",
+      "name": "Flag",
+      "size": { "width": 12, "height": 24 },
+      "tags": ["goal"],
+      "properties": [],
+      "components": {
+        "sprite": {
+          "image": "flag-sheet",
+          "frameWidth": 16,
+          "frameHeight": 24,
+          "offset": { "x": -2, "y": 0 },
+          "flipToFaceMovement": false,
+          "defaultAnimation": "wave",
+          "animations": [
+            { "id": "wave", "name": "Wave", "frames": [0, 1], "fps": 4, "loop": true }
+          ]
+        },
+        "collider": { "kind": "trigger", "collidesWithTiles": false }
+      }
+    },
+
+    {
+      "id": "score-label",
+      "name": "Score label",
+      "size": { "width": 80, "height": 10 },
+      "tags": ["hud"],
+      "properties": [],
+      "components": {
+        // Minimal text component: a built in bitmap font, one line, no styling
+        // beyond colour and alignment. {score} is replaced by the variable value.
+        // Without this there is no way to show a score, and a game whose score is
+        // invisible fails the 30 minute test.
+        "text": {
+          "content": "Score: {score}",
+          "color": "#ffffff",
+          "align": "left",
+          "size": "normal"
+        }
+      }
+    }
+  ],
+
+  // Rules that run in every scene. Handy for things like pause and restart, which
+  // would otherwise be copy pasted into each level.
+  "globalEvents": [
+    {
+      "id": "restart-when-out-of-lives",
+      "name": "Game over when out of lives",
+      "when": { "type": "variable-changes", "variable": "lives" },
+      "if": [{ "type": "variable-is", "variable": "lives", "operator": "at-most", "value": 0 }],
+      "then": [
+        { "type": "show-message", "text": "Game over", "seconds": 2 },
+        { "type": "set-variable", "variable": "lives", "value": 3 },
+        { "type": "set-variable", "variable": "score", "value": 0 },
+        { "type": "go-to-scene", "scene": "level-1" }
+      ]
+    }
+  ],
+
+  "scenes": [
+    {
+      "id": "level-1",
+      "name": "Level 1",
+
+      // One tile size per scene. Every layer in the scene uses it, and a tileset
+      // whose tiles are a different size cannot be used here. One number to think
+      // about instead of one per layer.
+      "tileSize": 16,
+      "size": { "columns": 32, "rows": 10 },
+
+      "background": { "color": "#10141c" },
+
+      // Tile layers are drawn in order, first to last. Entities are drawn between
+      // the layers whose `drawEntitiesAfter` is true and the ones after it.
+      "layers": [
+        {
+          "id": "sky",
+          "name": "Sky",
+          "tileset": "grass",
+          // No collision: purely decorative.
+          "collides": false,
+          // Scrolls at half the camera speed for a cheap depth effect.
+          // 1 means "moves with the world".
+          "parallax": { "x": 0.5, "y": 1 },
+          "drawEntitiesAfter": false,
+
+          // A tile layer is a picture you can read. `legend` maps one character to
+          // one tile index in the layer's tileset; `null` means empty. Every row
+          // string must be exactly `columns` characters long, and there must be
+          // exactly `rows` of them.
+          //
+          // The alternative is a grid of numbers, which nobody can read and which
+          // an assistant writing a level over MCP cannot reason about. See open
+          // question 1: this choice caps a single layer at 94 distinct tiles.
+          "legend": { ".": null, "c": 12 },
+          "rows": [
+            "................................",
+            "..c...................c.........",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................"
+          ]
+        },
+        {
+          "id": "ground",
+          "name": "Ground",
+          "tileset": "grass",
+          "collides": true,
+          "parallax": { "x": 1, "y": 1 },
+          "drawEntitiesAfter": true,
+          "legend": { ".": null, "#": 0, "=": 3, "^": 8 },
+          "rows": [
+            "................................",
+            "................................",
+            "........===.....................",
+            "................................",
+            "....................====........",
+            "................................",
+            "...........................====.",
+            "................................",
+            "...........^^...................",
+            "################################"
+          ]
+        }
+      ],
+
+      // Instances. `prototype` says what it is, x and y say where. `overrides` is a
+      // partial patch over the prototype's components, so one slow slime does not
+      // need a second prototype.
+      "entities": [
+        { "id": "player-1", "prototype": "player", "x": 24, "y": 112 },
+        { "id": "coin-1", "prototype": "coin", "x": 132, "y": 20 },
+        { "id": "coin-2", "prototype": "coin", "x": 324, "y": 52 },
+        { "id": "coin-3", "prototype": "coin", "x": 436, "y": 84 },
+        {
+          "id": "slime-1",
+          "prototype": "slime",
+          "x": 200,
+          "y": 132,
+          "overrides": { "movement": { "maxSpeed": 16 } }
+        },
+        { "id": "flag-1", "prototype": "flag", "x": 470, "y": 120 },
+        {
+          "id": "hud-score",
+          "prototype": "score-label",
+          "x": 8,
+          "y": 8,
+          // Stays put on screen instead of scrolling with the level.
+          "fixedToCamera": true
+        }
+      ],
+
+      "camera": {
+        // "follow" | "fixed" | "auto-scroll"
+        "mode": "follow",
+        "target": "player-1",
+        // The camera does not move while the target stays inside this box in the
+        // middle of the screen. Stops the picture wobbling on every small step.
+        "deadZone": { "width": 64, "height": 40 },
+        // 0 is instant, 1 never arrives. 0.15 is a gentle catch up.
+        "smoothing": 0.15,
+        "offset": { "x": 0, "y": 0 },
+        // Never show anything outside the scene bounds.
+        "clampToScene": true
+      },
+
+      // WHEN trigger [ON subject] IF conditions THEN actions.
+      // `if` is a list joined by AND; an empty list means "always".
+      // `then` is a list run in order.
+      // References inside a rule are plain strings resolved in this order:
+      //   "$self"  the entity the trigger fired on
+      //   "$other" the other entity in a collision
+      //   an instance id in this scene, e.g. "player-1"
+      //   a prototype id, meaning any entity of that kind, e.g. "coin"
+      //   "tag:enemy", meaning any entity carrying that tag
+      // The validator refuses a project where an instance id shadows a prototype id.
+      "events": [
+        {
+          "id": "collect-coin",
+          "name": "Collect a coin",
+          "enabled": true,
+          "when": { "type": "collides", "subject": "player", "with": "coin" },
+          "if": [],
+          "then": [
+            { "type": "play-sound", "sound": "sfx-coin", "volume": 0.8 },
+            { "type": "change-variable", "variable": "score", "operator": "add", "value": 1 },
+            { "type": "destroy", "target": "$other" }
+          ]
+        },
+        {
+          "id": "jump-sound",
+          "name": "Play a sound when the player jumps",
+          "enabled": true,
+          "when": { "type": "jumps", "subject": "player" },
+          "if": [],
+          "then": [{ "type": "play-sound", "sound": "sfx-jump", "volume": 0.6 }]
+        },
+        {
+          "id": "stomp-slime",
+          "name": "Stomp a slime by landing on it",
+          "enabled": true,
+          "when": { "type": "collides", "subject": "player", "with": "tag:enemy" },
+          // "is-falling" and "is-on-ground" are only offered for entities whose
+          // movement mode is "platform". Each rule definition declares which modes
+          // it applies to, and the editor filters the dropdown rather than showing
+          // greyed out options.
+          "if": [{ "type": "is-falling", "target": "$self" }],
+          "then": [
+            { "type": "destroy", "target": "$other" },
+            { "type": "jump", "target": "$self", "height": 28 },
+            { "type": "change-variable", "variable": "score", "operator": "add", "value": 5 }
+          ]
+        },
+        {
+          "id": "hurt-by-slime",
+          "name": "Lose a life when a slime touches the player",
+          "enabled": true,
+          "when": { "type": "collides", "subject": "player", "with": "tag:enemy" },
+          "if": [{ "type": "is-falling", "target": "$self", "negate": true }],
+          "then": [
+            { "type": "change-variable", "variable": "lives", "operator": "subtract", "value": 1 },
+            { "type": "restart-scene" }
+          ]
+        },
+        {
+          "id": "hurt-by-spikes",
+          "name": "Lose a life on spikes",
+          "enabled": true,
+          "when": { "type": "touches-tile", "subject": "player", "tag": "hazard" },
+          "if": [],
+          "then": [
+            { "type": "change-variable", "variable": "lives", "operator": "subtract", "value": 1 },
+            { "type": "restart-scene" }
+          ]
+        },
+        {
+          "id": "fall-out-of-level",
+          "name": "Lose a life when falling off the level",
+          "enabled": true,
+          "when": { "type": "leaves-scene", "subject": "player", "edge": "bottom" },
+          "if": [],
+          "then": [
+            { "type": "change-variable", "variable": "lives", "operator": "subtract", "value": 1 },
+            { "type": "restart-scene" }
+          ]
+        },
+        {
+          "id": "reach-flag",
+          "name": "Win by reaching the flag with every coin",
+          "enabled": true,
+          "when": { "type": "collides", "subject": "player", "with": "flag" },
+          "if": [{ "type": "variable-is", "variable": "score", "operator": "at-least", "value": 3 }],
+          "then": [
+            { "type": "show-message", "text": "You made it", "seconds": 2 },
+            { "type": "wait", "seconds": 2 },
+            { "type": "go-to-scene", "scene": "level-2" }
+          ]
+        }
+      ]
+    },
+
+    {
+      "id": "level-2",
+      "name": "Level 2",
+      "tileSize": 16,
+      "size": { "columns": 32, "rows": 10 },
+      "background": { "color": "#10141c" },
+      "layers": [
+        {
+          "id": "ground",
+          "name": "Ground",
+          "tileset": "grass",
+          "collides": true,
+          "parallax": { "x": 1, "y": 1 },
+          "drawEntitiesAfter": true,
+          "legend": { ".": null, "#": 0 },
+          "rows": [
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "################################"
+          ]
+        }
+      ],
+      "entities": [{ "id": "player-1", "prototype": "player", "x": 24, "y": 112 }],
+      "camera": {
+        "mode": "follow",
+        "target": "player-1",
+        "deadZone": { "width": 64, "height": 40 },
+        "smoothing": 0.15,
+        "offset": { "x": 0, "y": 0 },
+        "clampToScene": true
+      },
+      "events": []
+    }
+  ]
+}
+
+// ---------------------------------------------------------------------------
+// The rule vocabulary this format assumes. Each entry is a `type` value plus its
+// own fields, validated as a discriminated union. Every one is tagged with the
+// movement modes it applies to, so the editor can filter.
+//
+// TRIGGERS (13)
+//   game-starts                  once, when the game is first launched
+//   scene-starts                 every time a scene is entered or restarted
+//   every-frame                  once per simulation step
+//   every-seconds                on a repeating timer
+//   action-pressed               a named input action goes down
+//   action-released              a named input action goes up
+//   collides                     two entities begin overlapping
+//   collision-ends               two entities stop overlapping
+//   touches-tile                 an entity overlaps a tile carrying a tag
+//   variable-changes             a global variable is written
+//   entity-spawned               an entity of some kind appears
+//   entity-destroyed             an entity of some kind is removed
+//   leaves-scene                 an entity crosses an edge of the scene
+//   lands                        (platform only) an entity touches the ground
+//   jumps                        (platform only) an entity leaves the ground by jumping
+//   clicked                      the pointer presses on an entity
+//
+// CONDITIONS (10)
+//   variable-is                  compare a global variable
+//   property-is                  compare a custom property on an entity
+//   has-tag                      the entity carries a tag
+//   entity-exists                at least one entity of a kind is alive
+//   action-held                  a named input action is currently down
+//   distance-is                  two entities are nearer or further than N pixels
+//   chance                       succeeds N percent of the time
+//   current-scene-is             the running scene
+//   is-on-ground                 (platform only)
+//   is-falling                   (platform only)
+//   Every condition takes an optional "negate": true, so there is no separate
+//   "not on ground" entry cluttering the dropdown.
+//
+// ACTIONS (17)
+//   destroy                      remove an entity
+//   spawn                        create an entity of some kind at a position
+//   move                         set or add to an entity's velocity
+//   teleport                     put an entity at a position
+//   jump                         (platform only) make an entity jump, optional height
+//   set-variable / change-variable
+//   set-property / change-property
+//   play-animation               switch an entity's animation
+//   set-visible                  show or hide an entity
+//   play-sound / stop-sound
+//   show-message                 a short banner of text
+//   go-to-scene / restart-scene
+//   set-camera-target
+//   shake-camera
+//   set-tile                     paint or clear one tile at runtime, e.g. a door
+//   enable-rule / disable-rule   turn another rule on or off by id
+//   wait                         pause this rule's remaining actions for N seconds
+//
+// ---------------------------------------------------------------------------
+// OPEN QUESTIONS, listed in the order I care about them
+//
+// 1. Tile layers as pictures. `legend` plus `rows` of characters is readable,
+//    diffable and easy for a person or an assistant to write, which matters for
+//    phase 2 and for the MCP server. The cost is a hard cap of 94 distinct tiles
+//    per layer, since a legend key is one printable character. My view is that a
+//    beginner focused engine never needs more than that in one layer, and more
+//    layers are free. The alternative is a grid of numbers, unreadable but
+//    unbounded. Confirm the picture form, or say the word and I switch to numbers.
+//
+// 2. One file per game. Scenes live inside `game.pinforge.json` rather than in
+//    separate files. The editor saves one file, migrations run over one document,
+//    and MCP diffs one document. The cost is that a 30 scene project becomes a
+//    large file and two people cannot edit different levels without conflicting.
+//    Given the target user and no multiplayer or collaboration in scope, I think
+//    one file wins. Confirm.
+//
+// 3. Three additions to the minimum you described, each of which I believe the
+//    30 minute test needs:
+//      - `patrol` inside the platform movement component. Without it, the most
+//        common enemy in 2D games costs two event rules and a wall trigger.
+//      - a `text` component and `fixedToCamera` on instances, without which a
+//        score cannot be displayed and the score variable is pointless.
+//      - `globalEvents` at project level, so pause and game over are not copy
+//        pasted into every scene.
+//    Say if any of these should wait.
+//
+// 4. Migrations before there is anything to migrate. The plan says freeze the
+//    format early, but phase 2 is where hand authoring will expose its flaws.
+//    I would build the migration RUNNER and its golden file tests in phase 0 as
+//    planned, and keep the right to change version 1 freely until the example
+//    game in phase 2 plays. After that, every change costs a migration. This is a
+//    process point, not a format point, and I would rather agree it now.
+//
+// 5. Not a format question, but a gap in the plan worth naming early: the engine
+//    imports art and does not author it, which is correct, yet the 30 minute test
+//    starts with a user who has no PNG files. I suggest shipping a small CC0
+//    starter pack, a tileset and three characters, with the editor. Otherwise the
+//    first five minutes are spent hunting for sprites. Tell me if you want that in
+//    scope and I will keep a slot for it in the format via a "builtin:" source
+//    prefix on assets.
