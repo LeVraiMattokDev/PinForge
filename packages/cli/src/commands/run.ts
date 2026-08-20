@@ -3,11 +3,18 @@ import { buildHtml, readRuntimeBundle } from '../html.js';
 import { inlineAssets } from '../inline.js';
 import { openProject } from '../project-file.js';
 
+export interface RunningGame {
+  readonly url: string;
+  readonly name: string;
+  readonly file: string;
+  close(): void;
+}
+
 /**
  * Serves the game the same way `export` writes it, so what is played here is
  * exactly what ships.
  */
-export function run(target: string, port: number): void {
+export function run(target: string, port: number): Promise<RunningGame> {
   const { project, directory, file } = openProject(target);
   const html = buildHtml(inlineAssets(project, directory), readRuntimeBundle());
 
@@ -23,8 +30,15 @@ export function run(target: string, port: number): void {
     response.end(html);
   });
 
-  server.listen(port, () => {
-    process.stdout.write(`${project.meta.name} from ${file}\n`);
-    process.stdout.write(`Playing at http://localhost:${port}\nPress control and C to stop.\n`);
+  return new Promise((settle, fail) => {
+    server.once('error', fail);
+    server.listen(port, () => {
+      settle({
+        url: `http://localhost:${port}`,
+        name: project.meta.name,
+        file,
+        close: () => server.close(),
+      });
+    });
   });
 }

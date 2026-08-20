@@ -4,5 +4,7 @@ export { inlineAssets } from './inline.js';
 export { buildHtml, readRuntimeBundle } from './html.js';
 export { validate } from './commands/validate.js';
 export { exportGame } from './commands/export.js';
+export type { ExportedGame } from './commands/export.js';
 export { run } from './commands/run.js';
+export type { RunningGame } from './commands/run.js';
 export { create } from './commands/create.js';

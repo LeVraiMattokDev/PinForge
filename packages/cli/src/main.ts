@@ -15,7 +15,7 @@ const HELP = `pinforge - make and play 2D games
 <game> is a game.pinforge.json file, or the folder holding one.
 `;
 
-function main(argv: string[]): number {
+async function main(argv: string[]): Promise<number> {
   const { positionals, values } = parseArgs({
     args: argv,
     allowPositionals: true,
@@ -34,17 +34,29 @@ function main(argv: string[]): number {
   }
 
   switch (command) {
-    case 'new':
-      create(need(target, 'Which folder should the new game go in?'), values.name);
+    case 'new': {
+      const folder = need(target, 'Which folder should the new game go in?');
+      create(folder, values.name);
+      say(`Made a new game in ${folder}.\n\nNext:\n  pinforge run ${folder}`);
       return 0;
-    case 'run':
-      run(need(target, 'Which game should be played?'), Number(values.port ?? 4321));
+    }
+    case 'run': {
+      const game = await run(
+        need(target, 'Which game should be played?'),
+        Number(values.port ?? 4321),
+      );
+      say(`${game.name} from ${game.file}`);
+      say(`Playing at ${game.url}\nPress control and C to stop.`);
       return 0;
-    case 'export':
-      exportGame(need(target, 'Which game should be exported?'), values.out);
+    }
+    case 'export': {
+      const exported = exportGame(need(target, 'Which game should be exported?'), values.out);
+      say(`${exported.name} exported to ${exported.file} (${exported.kilobytes} kB).`);
+      say('It is one file with nothing else to upload. Open it in a browser, or put it anywhere.');
       return 0;
+    }
     case 'validate':
-      validate(need(target, 'Which game should be checked?'));
+      say(validate(need(target, 'Which game should be checked?')));
       return 0;
     default:
       process.stderr.write(`There is no command called "${command}".\n\n${HELP}`);
@@ -57,8 +69,12 @@ function need(value: string | undefined, question: string): string {
   return value;
 }
 
+function say(message: string): void {
+  process.stdout.write(`${message}\n`);
+}
+
 try {
-  process.exitCode = main(process.argv.slice(2));
+  process.exitCode = await main(process.argv.slice(2));
 } catch (error) {
   process.stderr.write(`${(error as Error).message}\n`);
   process.exitCode = 1;

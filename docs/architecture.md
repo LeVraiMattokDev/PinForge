@@ -112,6 +112,26 @@ from it, `docs/events-reference.md` is generated from it, validation uses its
 the tests check that it matches the schema in both directions. Four consumers,
 one list, no drift.
 
+## Two front ends, one set of operations
+
+`cli` owns the file facing operations: open and validate a project, scaffold a
+new one, inline its assets, build the exported page. `mcp` calls into those
+rather than repeating them, which is why the MCP server has no private side
+channel: it exports through the same exporter and validates through the same
+validator, so the two cannot drift apart.
+
+That makes every command function in `cli` a library function that returns what
+happened rather than printing it. The MCP server runs with the protocol on
+stdout, where one friendly line of output ends the conversation, and a test in
+`cli` asserts that the commands stay quiet.
+
+The MCP tool inputs are the project's own Zod definitions rather than a parallel
+description of them, so the JSON Schema a client sees is generated from the same
+place the editor validates against. A mutation edits the file's own text, checks
+the whole project, and only then writes: an assistant cannot leave a project half
+changed, and a game it touches keeps the shape a person wrote instead of
+acquiring every default.
+
 ## The runtime
 
 `packages/core` implements all of this. The format was designed around it.

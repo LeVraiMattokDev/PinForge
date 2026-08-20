@@ -10,6 +10,7 @@ import {
   inlineAssets,
   openProject,
   readRuntimeBundle,
+  validate,
 } from '../src/index.js';
 
 const EXAMPLE = new URL('../../../examples/first-game', import.meta.url).pathname;
@@ -69,8 +70,8 @@ describe('exporting', () => {
   });
 
   it('writes one HTML file that asks the network for nothing', () => {
-    const file = exportGame(EXAMPLE, join(workspace, 'coin-run.html'));
-    const html = readFileSync(file, 'utf8');
+    const exported = exportGame(EXAMPLE, join(workspace, 'coin-run.html'));
+    const html = readFileSync(exported.file, 'utf8');
 
     expect(html.startsWith('<!doctype html>')).toBe(true);
     expect(html).toContain('window.PINFORGE_PROJECT');
@@ -108,5 +109,32 @@ describe('starting a new game', () => {
     const directory = join(workspace, 'my-game');
 
     expect(() => create(directory, undefined)).toThrow(/already a game/);
+  });
+});
+
+describe('commands as a library', () => {
+  /**
+   * The MCP server calls these functions in a process whose stdout is the
+   * protocol stream. One stray line of friendly output there breaks the
+   * connection, so the commands return and only main.ts prints.
+   */
+  it('never writes to stdout', () => {
+    const written: string[] = [];
+    const original = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      written.push(String(chunk));
+      return true;
+    }) as typeof process.stdout.write;
+
+    try {
+      create(join(workspace, 'quiet-game'), 'Quiet');
+      exportGame(join(workspace, 'quiet-game'), join(workspace, 'quiet.html'));
+      openProject(EXAMPLE);
+      validate(EXAMPLE);
+    } finally {
+      process.stdout.write = original;
+    }
+
+    expect(written).toEqual([]);
   });
 });

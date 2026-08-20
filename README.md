@@ -35,9 +35,10 @@ gets on with being a game engine.
 
 ## Status
 
-Phases 0, 1, 2 and 4 of six are complete: the project format, the runtime that
-plays it, a playable example game written by hand, the command line, export to a
-single HTML file, and both movement modes. The format came first because it is
+Five of the six phases are done. Everything except the visual editor exists and
+is tested: the project format, the runtime, a playable example game written by
+hand, the command line, export to a single HTML file, both movement modes, and
+authoring over the Model Context Protocol. The format came first because it is
 the contract every other package agrees on.
 
 | Phase | What                                                                 | State |
@@ -47,7 +48,7 @@ the contract every other package agrees on.
 | 2     | `examples/first-game` written by hand, plus the CLI to run it        | done  |
 | 3     | `packages/editor`: the visual editor                                 | next  |
 | 4     | Export to standalone HTML, free movement, auto scrolling camera      | done  |
-| 5     | `packages/mcp`: authoring over the Model Context Protocol            |       |
+| 5     | `packages/mcp`: authoring over the Model Context Protocol            | done  |
 
 There is no editor yet, so a game is made by editing one JSON file. That part
 works end to end today:
@@ -82,6 +83,7 @@ A screenshot belongs here once there is an editor to screenshot.
   action, with an example each.
 - [Architecture](docs/architecture.md) — package boundaries and the decisions
   behind them, for contributors.
+- [The MCP server](docs/mcp.md) — building a game with an assistant.
 - [Contributing](CONTRIBUTING.md).
 
 A getting started guide arrives with phase 2, when there is something to run.

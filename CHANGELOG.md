@@ -43,12 +43,24 @@ project file changes, and every change comes with a migration.
   nothing to fetch, running the same runtime as the editor will.
 - `examples/first-game`: Coin Run, two levels written by hand in JSON, with a
   test that plays it headlessly and a test that no coin is placed out of reach.
+- `@pinforge/mcp`, a Model Context Protocol server with eighteen tools covering
+  opening and creating projects, reading levels, creating and changing entities,
+  painting tile regions, adding and removing rules, validating and exporting.
+  Tool inputs are the project's own Zod definitions, every mutation validates
+  the whole project before writing anything, and every mutation answers with a
+  structured diff of the paths it touched.
 - Documentation: the concepts, the authoritative format reference with a complete
   annotated example, and a generated events reference.
 - A pnpm workspace with TypeScript in strict mode, Vitest and continuous
   integration that fails if generated files have drifted.
 - `tools/make-placeholder-art.mjs`, which writes the example's pictures and
   sounds so the repository is self contained.
+
+### Changed
+
+- Every command function in `@pinforge/cli` returns what happened instead of
+  printing it, and only the command line prints. The MCP server runs with its
+  protocol on stdout, where a stray line of output breaks the connection.
 
 ### Fixed
 

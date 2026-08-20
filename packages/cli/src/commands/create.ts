@@ -17,6 +17,10 @@ function templateDirectory(): string {
 /**
  * Copies the starter project, art included. A new user has something playable
  * before they have made a single decision, which is the whole point.
+ *
+ * Like every command in this package it returns rather than prints: the MCP
+ * server calls in over stdio, where a stray line on stdout corrupts the
+ * protocol. There is a test that holds this to it.
  */
 export function create(target: string, name: string | undefined): string {
   const directory = resolve(process.cwd(), target);
@@ -36,6 +40,5 @@ export function create(target: string, name: string | undefined): string {
     writeFileSync(file, `${JSON.stringify(renamed, null, 2)}\n`);
   }
 
-  process.stdout.write(`Made a new game in ${directory}.\n\nNext:\n  pinforge run ${target}\n`);
   return file;
 }

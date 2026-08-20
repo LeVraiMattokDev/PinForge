@@ -44,16 +44,26 @@ Schema all come out of the same definitions.
 ## The one rule about package boundaries
 
 ```
-schema  <-  core  <-  cli
-   ^         ^
-   |         |
-   +--  editor, mcp
+schema  <-  core  <-  cli  <-  mcp
+   ^         ^         ^
+   |         |         |
+   +---------+-----  editor
 ```
 
 `schema` depends on nothing inside PinForge. `core` never imports from `editor`,
-and knows nothing about the DOM beyond the `Renderer` interface. `editor` and
-`mcp` both depend on `schema` and `core`. If a change needs one of those arrows
-reversed, it needs a discussion first.
+and knows nothing about the DOM beyond the `Renderer` interface. If a change
+needs one of those arrows reversed, it needs a discussion first.
+
+`mcp` depends on `cli` rather than reimplementing it. `cli` owns opening a
+project file, scaffolding a new one and exporting, and both the command line and
+the MCP server are front ends onto exactly those operations. That is the whole
+point of the MCP server having no private side channel, so the alternative was
+two exporters that could disagree.
+
+One consequence: every command function in `cli` returns what happened instead
+of printing it. The MCP server runs with its protocol on stdout, where a stray
+friendly line breaks the connection. There is a test that holds the commands to
+it.
 
 ## Code
 

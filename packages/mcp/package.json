@@ -1,0 +1,32 @@
+{
+  "name": "@pinforge/mcp",
+  "version": "0.0.0",
+  "description": "A Model Context Protocol server for authoring PinForge games.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "pinforge-mcp": "./dist/main.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tools.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@pinforge/cli": "workspace:*",
+    "@pinforge/schema": "workspace:*",
+    "zod": "^4.0.0"
+  }
+}
