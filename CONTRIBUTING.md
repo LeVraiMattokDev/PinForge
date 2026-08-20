@@ -19,11 +19,13 @@ pnpm check          # format, typecheck and every test. Run this before pushing.
 Other commands:
 
 ```bash
-pnpm test           # tests only
+pnpm build          # compile every package. Run this before typecheck: each
+                    # package's types come from the built dist of the one below.
 pnpm typecheck      # types only, including tests and scripts
-pnpm build          # compile every package
+pnpm test           # tests only
 pnpm generate       # regenerate the JSON Schema and the events reference
 pnpm format         # apply formatting
+pnpm --filter @pinforge/editor dev   # the editor, on a game you can play
 ```
 
 Continuous integration runs all of that, and then runs `pnpm generate` again and
@@ -74,6 +76,19 @@ it.
   than restating the label.
 - Comments explain why, not what. The code already says what.
 - Formatting is Prettier's problem. Do not argue with it.
+
+## The one rule about the editor
+
+Every change to a project is a `Command` in `packages/editor/src/state/commands.ts`:
+a pure function from one project to the next, with a label in the user's words.
+There is no other way to change a project, and there must not be, because undo
+is built on it. A mutation written outside a command is a bug even if it appears
+to work.
+
+Give a command a `mergeKey` when a gesture produces a run of them, so a brush
+drag is one undo step. The store validates the result of every command and
+refuses anything that would leave the project broken, so a command may be
+optimistic about what it produces.
 
 ## Tests
 

@@ -17,10 +17,11 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
-      - run: pnpm typecheck
-      # Build first: the command line package bundles the browser runtime out of
-      # core, and its tests export a real game through it.
+      # Build before checking types: a package's types come from the built
+      # dist of the package below it, and the command line bundles the browser
+      # runtime out of core before its tests export a real game through it.
       - run: pnpm build
+      - run: pnpm typecheck
       - run: pnpm test
       # The generated JSON Schema and events reference are committed. If they no
       # longer match the Zod definitions, the build is wrong, not the checkout.
