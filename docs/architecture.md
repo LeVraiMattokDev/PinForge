@@ -114,7 +114,7 @@ one list, no drift.
 
 ## The runtime
 
-Commitments for phase 1. The format was designed around them.
+`packages/core` implements all of this. The format was designed around it.
 
 ### Fixed timestep, 60 Hz
 
@@ -157,8 +157,9 @@ is authored as a height in pixels; the runtime derives the impulse.
 
 `free` moves on both axes with no gravity: a puzzle game with no acceleration, a
 shoot-em-up with an auto scrolling camera. It is defined in the format from
-version 1 so that adding it in phase 4 changes no project files, and the runtime
-refuses it until then.
+version 1 so that adding it in phase 4 changes no project files. Until then a
+project that uses it is refused when the game loads, by name, rather than
+quietly standing still.
 
 A third genre should be a third mode of this component, or a new field on it.
 A second runtime is the wrong answer.
@@ -167,7 +168,27 @@ A second runtime is the wrong answer.
 
 Canvas2D first, behind a `Renderer` interface, so a WebGL backend can replace it
 without game logic changing. Game logic never touches a canvas, an image or an
-audio element directly.
+audio element directly: everything that knows about the DOM is in `canvas2d.ts`
+and `browser.ts`, and nothing in the simulation imports either.
+
+Rendering may interpolate between the last two simulation states, which is why
+an entity remembers where it was. Nothing in the render pass writes back.
+
+### Rules run in the order they are written
+
+A step gathers what happened first (collisions started and ended, landings,
+jumps, tile overlaps, entities leaving the scene, clicks), then walks the
+scene's rules followed by the project's global rules, in file order. That makes
+the outcome of two rules that touch the same variable predictable from reading
+the file, top to bottom.
+
+Three signals are deliberately one step old: entities spawned, entities
+destroyed, and variables changed. A rule that reacts to a variable changing
+would otherwise be able to trigger itself, and the loop has no natural end.
+
+`wait` parks the rest of a rule's action list without pausing the game, which is
+what makes "show a message, wait, load the next level" a sentence rather than a
+state machine.
 
 ## Testing
 

@@ -35,8 +35,9 @@ gets on with being a game engine.
 
 ## Status
 
-Phase 0 of six is complete: the project format. That is the contract every other
-package agrees on, so it was built and frozen first.
+Phases 0 and 1 of six are complete: the project format, and the runtime that
+plays it. The format came first because it is the contract every other package
+agrees on.
 
 | Phase | What                                                                 | State |
 | ----- | -------------------------------------------------------------------- | ----- |
@@ -47,8 +48,8 @@ package agrees on, so it was built and frozen first.
 | 4     | Export to standalone HTML, then free movement and auto scroll        |       |
 | 5     | `packages/mcp`: authoring over the Model Context Protocol            |       |
 
-There is no playable engine yet. What exists today is a complete, tested,
-documented file format:
+There is no editor yet, and no example game to open. What exists today is the
+format and a working engine, both tested:
 
 ```bash
 pnpm install
