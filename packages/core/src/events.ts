@@ -74,6 +74,14 @@ export function runRules(host: RuntimeHost, signals: StepSignals, seconds: numbe
     for (const context of firings(host, rule.when, signals, rule.id, seconds)) {
       if (host.changingScene) return;
       if (rule.once && host.world.firedOnce.has(rule.id)) break;
+      // An earlier rule in the same step may already have removed one of the
+      // entities this firing is about. The canonical case is a platformer: one
+      // rule squashes an enemy when the player lands on it, the next takes a
+      // life when the player walks into one. Without this, squashing would also
+      // hurt, because the first rule's bounce changes what "is falling" answers
+      // for the second. A rule about something that no longer exists does not
+      // run.
+      if (context.self?.destroyed || context.other?.destroyed) continue;
       if (!conditionsHold(host, rule.if, context)) continue;
       if (rule.once) host.world.firedOnce.add(rule.id);
       start(host, rule.then, context);

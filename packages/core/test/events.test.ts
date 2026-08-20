@@ -334,3 +334,72 @@ describe('the camera', () => {
     expect(game.world.camera.x).toBeGreaterThan(0);
   });
 });
+
+describe('two rules about the same collision', () => {
+  /**
+   * The pattern every platformer needs: landing on an enemy squashes it, and
+   * walking into one hurts. Both rules watch the same collision and are told
+   * apart by whether the player is falling, so the first rule must not be able
+   * to make the second one true by changing the player as it runs.
+   */
+  const rules: NonNullable<ProjectInput['scenes'][number]['events']> = [
+    {
+      id: 'stomp',
+      when: { type: 'collides', subject: 'player', with: 'tag:enemy' },
+      if: [{ type: 'is-falling', target: '$self' }],
+      then: [
+        { type: 'destroy', target: '$other' },
+        { type: 'jump', target: '$self', height: 28 },
+        { type: 'change-variable', variable: 'score', value: 2 },
+      ],
+    },
+    {
+      id: 'hurt',
+      when: { type: 'collides', subject: 'player', with: 'tag:enemy' },
+      if: [{ type: 'is-falling', target: '$self', negate: true }],
+      then: [{ type: 'change-variable', variable: 'lives', operator: 'subtract', value: 1 }],
+    },
+  ];
+
+  const withEnemy = (playerY: number) =>
+    makeGame({
+      variables: [
+        { id: 'score', type: 'number', initial: 0 },
+        { id: 'lives', type: 'number', initial: 3 },
+      ],
+      prototypes: [
+        ...PLAYER,
+        {
+          id: 'slime',
+          size: { width: 12, height: 12 },
+          tags: ['enemy'],
+          components: {
+            collider: {},
+            movement: { mode: 'platform', controlledBy: 'rules', jumpHeight: 0 },
+          },
+        },
+      ],
+      entities: [
+        { id: 'player-1', prototype: 'player', x: 60, y: playerY },
+        { id: 'slime-1', prototype: 'slime', x: 60, y: 68 },
+      ],
+      events: rules,
+    });
+
+  it('squashes the enemy without also hurting the player', () => {
+    const game = withEnemy(0);
+    stepUntil(game, (one) => one.variable('score') === 2);
+
+    expect(game.variable('score')).toBe(2);
+    expect(game.variable('lives')).toBe(3);
+    expect(game.world.entities.filter((one) => one.prototypeId === 'slime')).toHaveLength(0);
+  });
+
+  it('still hurts the player who walks into an enemy', () => {
+    const game = withEnemy(64);
+    stepUntil(game, (one) => one.variable('lives') === 2, 120);
+
+    expect(game.variable('lives')).toBe(2);
+    expect(game.variable('score')).toBe(0);
+  });
+});

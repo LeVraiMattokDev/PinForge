@@ -21,6 +21,19 @@ importers:
         specifier: ^3.1.2
         version: 3.2.7(@types/node@22.20.1)(tsx@4.23.12)
 
+  packages/cli:
+    dependencies:
+      '@pinforge/core':
+        specifier: workspace:*
+        version: link:../core
+      '@pinforge/schema':
+        specifier: workspace:*
+        version: link:../schema
+    devDependencies:
+      esbuild:
+        specifier: ^0.28.2
+        version: 0.28.2
+
   packages/core:
     dependencies:
       '@pinforge/schema':

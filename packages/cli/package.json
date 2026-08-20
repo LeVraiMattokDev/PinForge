@@ -1,0 +1,35 @@
+{
+  "name": "@pinforge/cli",
+  "version": "0.0.0",
+  "description": "The PinForge command line: create, validate, run and export a game.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "pinforge": "./dist/main.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "runtime/pinforge-runtime.js",
+    "templates"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/build-runtime.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tools.json",
+    "test": "node scripts/build-runtime.mjs && vitest run"
+  },
+  "dependencies": {
+    "@pinforge/core": "workspace:*",
+    "@pinforge/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

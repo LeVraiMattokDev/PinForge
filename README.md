@@ -35,9 +35,10 @@ gets on with being a game engine.
 
 ## Status
 
-Phases 0 and 1 of six are complete: the project format, and the runtime that
-plays it. The format came first because it is the contract every other package
-agrees on.
+Phases 0, 1, 2 and most of 4 of six are complete: the project format, the
+runtime that plays it, a playable example game written by hand, the command
+line, and export to a single HTML file. The format came first because it is the
+contract every other package agrees on.
 
 | Phase | What                                                                 | State |
 | ----- | -------------------------------------------------------------------- | ----- |
@@ -48,27 +49,31 @@ agrees on.
 | 4     | Export to standalone HTML, then free movement and auto scroll        |       |
 | 5     | `packages/mcp`: authoring over the Model Context Protocol            |       |
 
-There is no editor yet, and no example game to open. What exists today is the
-format and a working engine, both tested:
+There is no editor yet, so a game is made by editing one JSON file. That part
+works end to end today:
 
 ```bash
-pnpm install
-pnpm check     # format, typecheck and 57 tests
+pnpm install && pnpm build
+
+# Play the example in a browser
+node packages/cli/dist/main.js run examples/first-game
+
+# Or start your own, from a playable starting point
+node packages/cli/dist/main.js new my-game --name "My game"
+node packages/cli/dist/main.js run my-game
+
+# Ship it as one HTML file with nothing else to upload
+node packages/cli/dist/main.js export my-game --out my-game.html
 ```
 
-```ts
-import { loadProject } from '@pinforge/schema';
-
-// Migrates the file if it is old, checks its shape, then checks that everything
-// it points at exists. Throws a readable error instead of a stack trace.
-const { project } = loadProject(JSON.parse(fileContents));
-console.log(project.meta.name, project.scenes.length);
-```
+See [getting started](docs/getting-started.md) for the full walkthrough.
 
 A screenshot belongs here once there is an editor to screenshot.
 
 ## Documentation
 
+- [Getting started](docs/getting-started.md) — make a small platformer from
+  nothing, written for someone who has never made a game.
 - [Concepts](docs/concepts.md) — scenes, entities, components, tiles and events
   in plain language.
 - [The project format](docs/project-format.md) — the authoritative description of

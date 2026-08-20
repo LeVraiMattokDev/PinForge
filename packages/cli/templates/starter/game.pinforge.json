@@ -1,0 +1,163 @@
+{
+  "formatVersion": 1,
+  "meta": {
+    "name": "My game",
+    "description": "A starting point. Change anything."
+  },
+  "settings": {
+    "startScene": "level-1",
+    "viewport": { "width": 320, "height": 160, "scaleMode": "integer" },
+    "pixelArt": true,
+    "backgroundColor": "#10141c"
+  },
+  "variables": [{ "id": "score", "name": "Score", "type": "number", "initial": 0 }],
+  "assets": [
+    { "id": "tiles", "kind": "image", "name": "Tiles", "source": "assets/tiles.png" },
+    { "id": "player-art", "kind": "image", "name": "Player", "source": "assets/player.png" },
+    { "id": "coin-art", "kind": "image", "name": "Coin", "source": "assets/coin.png" },
+    {
+      "id": "sfx-coin",
+      "kind": "sound",
+      "name": "Coin",
+      "source": "assets/coin.wav",
+      "volume": 0.7
+    },
+    {
+      "id": "sfx-jump",
+      "kind": "sound",
+      "name": "Jump",
+      "source": "assets/jump.wav",
+      "volume": 0.5
+    }
+  ],
+  "tilesets": [
+    {
+      "id": "world",
+      "name": "World",
+      "image": "tiles",
+      "tileWidth": 16,
+      "tileHeight": 16,
+      "tiles": [
+        { "index": 0, "name": "Grass", "tags": ["solid"] },
+        { "index": 1, "name": "Dirt", "tags": ["solid"] },
+        { "index": 2, "name": "Wooden platform", "tags": ["one-way"] },
+        { "index": 3, "name": "Spikes", "tags": ["hazard"] },
+        { "index": 4, "name": "Cloud", "tags": [] }
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "id": "player",
+      "name": "Player",
+      "size": { "width": 12, "height": 16 },
+      "tags": ["player"],
+      "components": {
+        "sprite": {
+          "image": "player-art",
+          "frameWidth": 16,
+          "frameHeight": 16,
+          "offset": { "x": -2, "y": 0 },
+          "flipToFaceMovement": true,
+          "defaultAnimation": "idle",
+          "animations": [
+            { "id": "idle", "name": "Idle", "frames": [0, 1], "fps": 4 },
+            { "id": "run", "name": "Run", "frames": [2, 3, 4, 5], "fps": 12 }
+          ]
+        },
+        "collider": { "kind": "solid" },
+        "movement": { "mode": "platform" }
+      }
+    },
+    {
+      "id": "coin",
+      "name": "Coin",
+      "size": { "width": 8, "height": 8 },
+      "tags": ["pickup"],
+      "components": {
+        "sprite": {
+          "image": "coin-art",
+          "frameWidth": 8,
+          "frameHeight": 8,
+          "defaultAnimation": "spin",
+          "animations": [{ "id": "spin", "name": "Spin", "frames": [0, 1, 2, 3], "fps": 8 }]
+        },
+        "collider": { "kind": "trigger", "collidesWithTiles": false }
+      }
+    },
+    {
+      "id": "score-label",
+      "name": "Score label",
+      "size": { "width": 90, "height": 10 },
+      "tags": ["hud"],
+      "components": { "text": { "content": "Score: {score}", "color": "#ffffff" } }
+    }
+  ],
+  "scenes": [
+    {
+      "id": "level-1",
+      "name": "Level 1",
+      "tileSize": 16,
+      "size": { "columns": 20, "rows": 10 },
+      "background": { "color": "#8ec9f0" },
+      "layers": [
+        {
+          "id": "ground",
+          "name": "Ground",
+          "tileset": "world",
+          "collides": true,
+          "drawEntitiesAfter": true,
+          "legend": { ".": null, "#": 0, "=": 2, "^": 3 },
+          "rows": [
+            "....................",
+            "....................",
+            "....................",
+            "......====..........",
+            "....................",
+            "....................",
+            ".............====...",
+            "....................",
+            "....................",
+            "####################"
+          ]
+        }
+      ],
+      "entities": [
+        { "id": "player-1", "prototype": "player", "x": 24, "y": 128 },
+        { "id": "coin-1", "prototype": "coin", "x": 104, "y": 40 },
+        { "id": "coin-2", "prototype": "coin", "x": 216, "y": 88 },
+        { "id": "coin-3", "prototype": "coin", "x": 160, "y": 136 },
+        { "id": "hud-score", "prototype": "score-label", "x": 8, "y": 8, "fixedToCamera": true }
+      ],
+      "camera": { "mode": "fixed", "x": 0, "y": 0 },
+      "events": [
+        {
+          "id": "collect-coin",
+          "name": "Collect a coin",
+          "when": { "type": "collides", "subject": "player", "with": "coin" },
+          "then": [
+            { "type": "play-sound", "sound": "sfx-coin" },
+            { "type": "change-variable", "variable": "score", "operator": "add", "value": 1 },
+            { "type": "destroy", "target": "$other" }
+          ]
+        },
+        {
+          "id": "jump-sound",
+          "name": "Make a noise when jumping",
+          "when": { "type": "jumps", "subject": "player" },
+          "then": [{ "type": "play-sound", "sound": "sfx-jump" }]
+        },
+        {
+          "id": "all-coins",
+          "name": "Say something when every coin is collected",
+          "once": true,
+          "when": { "type": "variable-changes", "variable": "score" },
+          "if": [
+            { "type": "variable-is", "variable": "score", "operator": "at-least", "value": 3 }
+          ],
+          "then": [{ "type": "show-message", "text": "You got them all", "seconds": 3 }]
+        }
+      ]
+    }
+  ]
+}

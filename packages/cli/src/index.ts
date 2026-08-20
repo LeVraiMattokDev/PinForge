@@ -1,0 +1,8 @@
+export { openProject, findProjectFile, PROJECT_FILE_NAME } from './project-file.js';
+export type { OpenedProject } from './project-file.js';
+export { inlineAssets } from './inline.js';
+export { buildHtml, readRuntimeBundle } from './html.js';
+export { validate } from './commands/validate.js';
+export { exportGame } from './commands/export.js';
+export { run } from './commands/run.js';
+export { create } from './commands/create.js';

@@ -5,3 +5,6 @@ coverage/
 .DS_Store
 .vscode/
 .idea/
+
+# Generated at build time by packages/cli/scripts/build-runtime.mjs
+packages/cli/runtime/pinforge-runtime.js

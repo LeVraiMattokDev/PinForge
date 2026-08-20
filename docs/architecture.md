@@ -190,6 +190,15 @@ would otherwise be able to trigger itself, and the loop has no natural end.
 what makes "show a message, wait, load the next level" a sentence rather than a
 state machine.
 
+A firing is skipped when one of the entities it is about has already been
+removed by an earlier rule in the same step. This is not a special case; it is
+what makes the most common pair of rules in any platformer work. One rule
+squashes an enemy when the player lands on it, the next takes a life when the
+player walks into one, and both watch the same collision. Without the skip, the
+first rule's bounce would change what "is falling" answers for the second, so
+squashing an enemy would also hurt you. There is a test named after exactly
+that.
+
 ## Testing
 
 Runtime simulation tests are deterministic: a starting state, a scripted input

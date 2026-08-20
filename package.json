@@ -16,7 +16,7 @@
     "generate": "pnpm -r generate",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "pnpm format:check && pnpm typecheck && pnpm test"
+    "check": "pnpm format:check && pnpm typecheck && pnpm build && pnpm test"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",

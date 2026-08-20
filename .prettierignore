@@ -7,3 +7,4 @@ packages/schema/schema/*.json
 # rewrites the annotated example in docs/project-format.md into something its
 # own test cannot read.
 docs/
+packages/cli/runtime/pinforge-runtime.js
