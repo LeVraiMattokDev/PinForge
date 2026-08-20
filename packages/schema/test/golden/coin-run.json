@@ -1,0 +1,759 @@
+{
+  "formatVersion": 1,
+  "meta": {
+    "name": "Coin Run",
+    "author": "PinStudio",
+    "description": "A tiny platformer used to validate the project format.",
+    "created": "2026-08-20T10:00:00Z",
+    "modified": "2026-08-20T10:00:00Z"
+  },
+  "settings": {
+    "startScene": "level-1",
+    "viewport": {
+      "width": 320,
+      "height": 180,
+      "scaleMode": "integer"
+    },
+    "pixelArt": true,
+    "backgroundColor": "#10141c",
+    "input": {
+      "left": ["ArrowLeft", "KeyA"],
+      "right": ["ArrowRight", "KeyD"],
+      "up": ["ArrowUp", "KeyW"],
+      "down": ["ArrowDown", "KeyS"],
+      "jump": ["Space", "ArrowUp", "KeyW"],
+      "action": ["KeyE", "Enter"],
+      "pause": ["Escape"]
+    }
+  },
+  "variables": [
+    {
+      "id": "score",
+      "name": "Score",
+      "type": "number",
+      "initial": 0
+    },
+    {
+      "id": "lives",
+      "name": "Lives",
+      "type": "number",
+      "initial": 3
+    }
+  ],
+  "assets": [
+    {
+      "id": "tiles-grass",
+      "kind": "image",
+      "source": "assets/tiles-grass.png"
+    },
+    {
+      "id": "player-sheet",
+      "kind": "image",
+      "source": "assets/player.png"
+    },
+    {
+      "id": "coin-sheet",
+      "kind": "image",
+      "source": "assets/coin.png"
+    },
+    {
+      "id": "slime-sheet",
+      "kind": "image",
+      "source": "assets/slime.png"
+    },
+    {
+      "id": "flag-sheet",
+      "kind": "image",
+      "source": "assets/flag.png"
+    },
+    {
+      "id": "sfx-jump",
+      "kind": "sound",
+      "source": "assets/jump.wav"
+    },
+    {
+      "id": "sfx-coin",
+      "kind": "sound",
+      "source": "assets/coin.wav"
+    }
+  ],
+  "tilesets": [
+    {
+      "id": "grass",
+      "name": "Grass",
+      "image": "tiles-grass",
+      "tileWidth": 16,
+      "tileHeight": 16,
+      "margin": 0,
+      "spacing": 0,
+      "tiles": [
+        {
+          "index": 0,
+          "name": "Ground",
+          "tags": ["solid"]
+        },
+        {
+          "index": 3,
+          "name": "Wooden platform",
+          "tags": ["one-way"]
+        },
+        {
+          "index": 8,
+          "name": "Spikes",
+          "tags": ["hazard"]
+        },
+        {
+          "index": 12,
+          "name": "Cloud",
+          "tags": []
+        }
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "id": "player",
+      "name": "Player",
+      "size": {
+        "width": 12,
+        "height": 16
+      },
+      "tags": ["player"],
+      "properties": [
+        {
+          "id": "invulnerable-for",
+          "name": "Invulnerable for",
+          "type": "number",
+          "initial": 0
+        }
+      ],
+      "components": {
+        "sprite": {
+          "image": "player-sheet",
+          "frameWidth": 16,
+          "frameHeight": 16,
+          "offset": {
+            "x": -2,
+            "y": 0
+          },
+          "flipToFaceMovement": true,
+          "defaultAnimation": "idle",
+          "animations": [
+            {
+              "id": "idle",
+              "name": "Idle",
+              "frames": [0, 1],
+              "fps": 4,
+              "loop": true
+            },
+            {
+              "id": "run",
+              "name": "Run",
+              "frames": [2, 3, 4, 5],
+              "fps": 12,
+              "loop": true
+            },
+            {
+              "id": "jump",
+              "name": "Jump",
+              "frames": [6],
+              "fps": 1,
+              "loop": false
+            }
+          ]
+        },
+        "collider": {
+          "kind": "solid",
+          "collidesWithTiles": true
+        },
+        "movement": {
+          "mode": "platform",
+          "controlledBy": "player",
+          "maxSpeed": 90,
+          "acceleration": 600,
+          "deceleration": 900,
+          "airControl": 0.7,
+          "gravity": 900,
+          "fallGravityMultiplier": 1.7,
+          "maxFallSpeed": 320,
+          "jumpHeight": 44,
+          "jumpCount": 1,
+          "variableJumpHeight": true,
+          "coyoteTime": 0.1,
+          "jumpBufferTime": 0.12
+        }
+      }
+    },
+    {
+      "id": "coin",
+      "name": "Coin",
+      "size": {
+        "width": 8,
+        "height": 8
+      },
+      "tags": ["pickup"],
+      "properties": [],
+      "components": {
+        "sprite": {
+          "image": "coin-sheet",
+          "frameWidth": 8,
+          "frameHeight": 8,
+          "offset": {
+            "x": 0,
+            "y": 0
+          },
+          "flipToFaceMovement": false,
+          "defaultAnimation": "spin",
+          "animations": [
+            {
+              "id": "spin",
+              "name": "Spin",
+              "frames": [0, 1, 2, 3],
+              "fps": 8,
+              "loop": true
+            }
+          ]
+        },
+        "collider": {
+          "kind": "trigger",
+          "collidesWithTiles": false
+        }
+      }
+    },
+    {
+      "id": "slime",
+      "name": "Slime",
+      "size": {
+        "width": 14,
+        "height": 12
+      },
+      "tags": ["enemy"],
+      "properties": [],
+      "components": {
+        "sprite": {
+          "image": "slime-sheet",
+          "frameWidth": 16,
+          "frameHeight": 16,
+          "offset": {
+            "x": -1,
+            "y": -4
+          },
+          "flipToFaceMovement": true,
+          "defaultAnimation": "walk",
+          "animations": [
+            {
+              "id": "walk",
+              "name": "Walk",
+              "frames": [0, 1],
+              "fps": 6,
+              "loop": true
+            }
+          ]
+        },
+        "collider": {
+          "kind": "solid",
+          "collidesWithTiles": true
+        },
+        "movement": {
+          "mode": "platform",
+          "controlledBy": "rules",
+          "maxSpeed": 24,
+          "acceleration": 400,
+          "deceleration": 400,
+          "airControl": 1,
+          "gravity": 900,
+          "fallGravityMultiplier": 1.7,
+          "maxFallSpeed": 320,
+          "jumpHeight": 0,
+          "jumpCount": 0,
+          "variableJumpHeight": false,
+          "coyoteTime": 0,
+          "jumpBufferTime": 0,
+          "patrol": {
+            "direction": "left",
+            "turnAtWalls": true,
+            "turnAtLedges": true
+          }
+        }
+      }
+    },
+    {
+      "id": "flag",
+      "name": "Flag",
+      "size": {
+        "width": 12,
+        "height": 24
+      },
+      "tags": ["goal"],
+      "properties": [],
+      "components": {
+        "sprite": {
+          "image": "flag-sheet",
+          "frameWidth": 16,
+          "frameHeight": 24,
+          "offset": {
+            "x": -2,
+            "y": 0
+          },
+          "flipToFaceMovement": false,
+          "defaultAnimation": "wave",
+          "animations": [
+            {
+              "id": "wave",
+              "name": "Wave",
+              "frames": [0, 1],
+              "fps": 4,
+              "loop": true
+            }
+          ]
+        },
+        "collider": {
+          "kind": "trigger",
+          "collidesWithTiles": false
+        }
+      }
+    },
+    {
+      "id": "score-label",
+      "name": "Score label",
+      "size": {
+        "width": 80,
+        "height": 10
+      },
+      "tags": ["hud"],
+      "properties": [],
+      "components": {
+        "text": {
+          "content": "Score: {score}",
+          "color": "#ffffff",
+          "align": "left",
+          "size": "normal"
+        }
+      }
+    }
+  ],
+  "globalEvents": [
+    {
+      "id": "restart-when-out-of-lives",
+      "name": "Game over when out of lives",
+      "when": {
+        "type": "variable-changes",
+        "variable": "lives"
+      },
+      "if": [
+        {
+          "type": "variable-is",
+          "variable": "lives",
+          "operator": "at-most",
+          "value": 0
+        }
+      ],
+      "then": [
+        {
+          "type": "show-message",
+          "text": "Game over",
+          "seconds": 2
+        },
+        {
+          "type": "set-variable",
+          "variable": "lives",
+          "value": 3
+        },
+        {
+          "type": "set-variable",
+          "variable": "score",
+          "value": 0
+        },
+        {
+          "type": "go-to-scene",
+          "scene": "level-1"
+        }
+      ]
+    }
+  ],
+  "scenes": [
+    {
+      "id": "level-1",
+      "name": "Level 1",
+      "tileSize": 16,
+      "size": {
+        "columns": 32,
+        "rows": 10
+      },
+      "background": {
+        "color": "#10141c"
+      },
+      "layers": [
+        {
+          "id": "sky",
+          "name": "Sky",
+          "tileset": "grass",
+          "collides": false,
+          "parallax": {
+            "x": 0.5,
+            "y": 1
+          },
+          "drawEntitiesAfter": false,
+          "legend": {
+            ".": null,
+            "c": 12
+          },
+          "rows": [
+            "................................",
+            "..c...................c.........",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................"
+          ]
+        },
+        {
+          "id": "ground",
+          "name": "Ground",
+          "tileset": "grass",
+          "collides": true,
+          "parallax": {
+            "x": 1,
+            "y": 1
+          },
+          "drawEntitiesAfter": true,
+          "legend": {
+            ".": null,
+            "#": 0,
+            "=": 3,
+            "^": 8
+          },
+          "rows": [
+            "................................",
+            "................................",
+            "........===.....................",
+            "................................",
+            "....................====........",
+            "................................",
+            "...........................====.",
+            "................................",
+            "...........^^...................",
+            "################################"
+          ]
+        }
+      ],
+      "entities": [
+        {
+          "id": "player-1",
+          "prototype": "player",
+          "x": 24,
+          "y": 112
+        },
+        {
+          "id": "coin-1",
+          "prototype": "coin",
+          "x": 132,
+          "y": 20
+        },
+        {
+          "id": "coin-2",
+          "prototype": "coin",
+          "x": 324,
+          "y": 52
+        },
+        {
+          "id": "coin-3",
+          "prototype": "coin",
+          "x": 436,
+          "y": 84
+        },
+        {
+          "id": "slime-1",
+          "prototype": "slime",
+          "x": 200,
+          "y": 132,
+          "overrides": {
+            "movement": {
+              "maxSpeed": 16
+            }
+          }
+        },
+        {
+          "id": "flag-1",
+          "prototype": "flag",
+          "x": 470,
+          "y": 120
+        },
+        {
+          "id": "hud-score",
+          "prototype": "score-label",
+          "x": 8,
+          "y": 8,
+          "fixedToCamera": true
+        }
+      ],
+      "camera": {
+        "mode": "follow",
+        "target": "player-1",
+        "deadZone": {
+          "width": 64,
+          "height": 40
+        },
+        "smoothing": 0.15,
+        "offset": {
+          "x": 0,
+          "y": 0
+        },
+        "clampToScene": true
+      },
+      "events": [
+        {
+          "id": "collect-coin",
+          "name": "Collect a coin",
+          "enabled": true,
+          "when": {
+            "type": "collides",
+            "subject": "player",
+            "with": "coin"
+          },
+          "if": [],
+          "then": [
+            {
+              "type": "play-sound",
+              "sound": "sfx-coin",
+              "volume": 0.8
+            },
+            {
+              "type": "change-variable",
+              "variable": "score",
+              "operator": "add",
+              "value": 1
+            },
+            {
+              "type": "destroy",
+              "target": "$other"
+            }
+          ]
+        },
+        {
+          "id": "jump-sound",
+          "name": "Play a sound when the player jumps",
+          "enabled": true,
+          "when": {
+            "type": "jumps",
+            "subject": "player"
+          },
+          "if": [],
+          "then": [
+            {
+              "type": "play-sound",
+              "sound": "sfx-jump",
+              "volume": 0.6
+            }
+          ]
+        },
+        {
+          "id": "stomp-slime",
+          "name": "Stomp a slime by landing on it",
+          "enabled": true,
+          "when": {
+            "type": "collides",
+            "subject": "player",
+            "with": "tag:enemy"
+          },
+          "if": [
+            {
+              "type": "is-falling",
+              "target": "$self"
+            }
+          ],
+          "then": [
+            {
+              "type": "destroy",
+              "target": "$other"
+            },
+            {
+              "type": "jump",
+              "target": "$self",
+              "height": 28
+            },
+            {
+              "type": "change-variable",
+              "variable": "score",
+              "operator": "add",
+              "value": 5
+            }
+          ]
+        },
+        {
+          "id": "hurt-by-slime",
+          "name": "Lose a life when a slime touches the player",
+          "enabled": true,
+          "when": {
+            "type": "collides",
+            "subject": "player",
+            "with": "tag:enemy"
+          },
+          "if": [
+            {
+              "type": "is-falling",
+              "target": "$self",
+              "negate": true
+            }
+          ],
+          "then": [
+            {
+              "type": "change-variable",
+              "variable": "lives",
+              "operator": "subtract",
+              "value": 1
+            },
+            {
+              "type": "restart-scene"
+            }
+          ]
+        },
+        {
+          "id": "hurt-by-spikes",
+          "name": "Lose a life on spikes",
+          "enabled": true,
+          "when": {
+            "type": "touches-tile",
+            "subject": "player",
+            "tag": "hazard"
+          },
+          "if": [],
+          "then": [
+            {
+              "type": "change-variable",
+              "variable": "lives",
+              "operator": "subtract",
+              "value": 1
+            },
+            {
+              "type": "restart-scene"
+            }
+          ]
+        },
+        {
+          "id": "fall-out-of-level",
+          "name": "Lose a life when falling off the level",
+          "enabled": true,
+          "when": {
+            "type": "leaves-scene",
+            "subject": "player",
+            "edge": "bottom"
+          },
+          "if": [],
+          "then": [
+            {
+              "type": "change-variable",
+              "variable": "lives",
+              "operator": "subtract",
+              "value": 1
+            },
+            {
+              "type": "restart-scene"
+            }
+          ]
+        },
+        {
+          "id": "reach-flag",
+          "name": "Win by reaching the flag with every coin",
+          "enabled": true,
+          "when": {
+            "type": "collides",
+            "subject": "player",
+            "with": "flag"
+          },
+          "if": [
+            {
+              "type": "variable-is",
+              "variable": "score",
+              "operator": "at-least",
+              "value": 3
+            }
+          ],
+          "then": [
+            {
+              "type": "show-message",
+              "text": "You made it",
+              "seconds": 2
+            },
+            {
+              "type": "wait",
+              "seconds": 2
+            },
+            {
+              "type": "go-to-scene",
+              "scene": "level-2"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "level-2",
+      "name": "Level 2",
+      "tileSize": 16,
+      "size": {
+        "columns": 32,
+        "rows": 10
+      },
+      "background": {
+        "color": "#10141c"
+      },
+      "layers": [
+        {
+          "id": "ground",
+          "name": "Ground",
+          "tileset": "grass",
+          "collides": true,
+          "parallax": {
+            "x": 1,
+            "y": 1
+          },
+          "drawEntitiesAfter": true,
+          "legend": {
+            ".": null,
+            "#": 0
+          },
+          "rows": [
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "................................",
+            "################################"
+          ]
+        }
+      ],
+      "entities": [
+        {
+          "id": "player-1",
+          "prototype": "player",
+          "x": 24,
+          "y": 112
+        }
+      ],
+      "camera": {
+        "mode": "follow",
+        "target": "player-1",
+        "deadZone": {
+          "width": 64,
+          "height": 40
+        },
+        "smoothing": 0.15,
+        "offset": {
+          "x": 0,
+          "y": 0
+        },
+        "clampToScene": true
+      },
+      "events": []
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "formatVersion": 1,
+  "meta": { "name": "The smallest possible game" },
+  "settings": { "startScene": "level-1" },
+  "scenes": [
+    {
+      "id": "level-1",
+      "size": { "columns": 4, "rows": 3 }
+    }
+  ]
+}

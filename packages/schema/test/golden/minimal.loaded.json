@@ -1,0 +1,54 @@
+{
+  "formatVersion": 1,
+  "meta": {
+    "name": "The smallest possible game",
+    "author": "",
+    "description": ""
+  },
+  "settings": {
+    "startScene": "level-1",
+    "viewport": {
+      "width": 320,
+      "height": 180,
+      "scaleMode": "integer"
+    },
+    "pixelArt": true,
+    "backgroundColor": "#10141c",
+    "input": {
+      "left": ["ArrowLeft", "KeyA"],
+      "right": ["ArrowRight", "KeyD"],
+      "up": ["ArrowUp", "KeyW"],
+      "down": ["ArrowDown", "KeyS"],
+      "jump": ["Space", "ArrowUp", "KeyW"],
+      "action": ["KeyE", "Enter"],
+      "pause": ["Escape"]
+    }
+  },
+  "variables": [],
+  "assets": [],
+  "tilesets": [],
+  "entities": [],
+  "globalEvents": [],
+  "scenes": [
+    {
+      "id": "level-1",
+      "tileSize": 16,
+      "size": {
+        "columns": 4,
+        "rows": 3
+      },
+      "background": {
+        "color": "#10141c"
+      },
+      "layers": [],
+      "entities": [],
+      "camera": {
+        "mode": "fixed",
+        "x": 0,
+        "y": 0,
+        "clampToScene": true
+      },
+      "events": []
+    }
+  ]
+}
