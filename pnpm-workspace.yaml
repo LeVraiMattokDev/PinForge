@@ -1,0 +1,7 @@
+packages:
+  - 'packages/*'
+
+# esbuild ships a platform specific binary and needs its install script to run.
+# It is a transitive dependency of vitest and tsx.
+onlyBuiltDependencies:
+  - esbuild

@@ -1,0 +1,9 @@
+dist/
+coverage/
+pnpm-lock.yaml
+packages/schema/schema/*.json
+
+# Prose, and one generated file. Prettier reformats fenced code blocks, which
+# rewrites the annotated example in docs/project-format.md into something its
+# own test cannot read.
+docs/
