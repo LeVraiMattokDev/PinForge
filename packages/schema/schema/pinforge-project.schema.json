@@ -1,0 +1,4242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pinforge.org/schema/pinforge-project.schema.json",
+  "type": "object",
+  "properties": {
+    "formatVersion": {
+      "type": "number",
+      "const": 1,
+      "description": "The version of the PinForge format this file was written in."
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "author": {
+          "default": "",
+          "type": "string",
+          "maxLength": 120
+        },
+        "description": {
+          "default": "",
+          "type": "string",
+          "maxLength": 2000
+        },
+        "created": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        },
+        "modified": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z))$"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "startScene": {
+          "type": "string",
+          "maxLength": 64,
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "The scene the game opens on."
+        },
+        "viewport": {
+          "default": {},
+          "type": "object",
+          "properties": {
+            "width": {
+              "default": 320,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 4096
+            },
+            "height": {
+              "default": 180,
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 4096
+            },
+            "scaleMode": {
+              "default": "integer",
+              "description": "integer only scales by whole numbers, which keeps pixel art crisp. fit allows any scale and adds bars. stretch ignores the shape of the window.",
+              "type": "string",
+              "enum": [
+                "integer",
+                "fit",
+                "stretch"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "pixelArt": {
+          "default": true,
+          "description": "Draw images without smoothing, so pixel art stays sharp.",
+          "type": "boolean"
+        },
+        "backgroundColor": {
+          "default": "#10141c",
+          "description": "Shown around the game when the window does not match the viewport shape.",
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "input": {
+          "default": {
+            "left": [
+              "ArrowLeft",
+              "KeyA"
+            ],
+            "right": [
+              "ArrowRight",
+              "KeyD"
+            ],
+            "up": [
+              "ArrowUp",
+              "KeyW"
+            ],
+            "down": [
+              "ArrowDown",
+              "KeyS"
+            ],
+            "jump": [
+              "Space",
+              "ArrowUp",
+              "KeyW"
+            ],
+            "action": [
+              "KeyE",
+              "Enter"
+            ],
+            "pause": [
+              "Escape"
+            ]
+          },
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+          },
+          "additionalProperties": {
+            "minItems": 1,
+            "maxItems": 8,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 32
+            }
+          },
+          "description": "Named controls, each bound to one or more keys."
+        }
+      },
+      "required": [
+        "startScene"
+      ],
+      "additionalProperties": false
+    },
+    "variables": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]*$",
+                "description": "A stable identifier, for example \"player\" or \"level-1\"."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "type": {
+                "type": "string",
+                "const": "number"
+              },
+              "initial": {
+                "default": 0,
+                "type": "number"
+              }
+            },
+            "required": [
+              "id",
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]*$",
+                "description": "A stable identifier, for example \"player\" or \"level-1\"."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "type": {
+                "type": "string",
+                "const": "boolean"
+              },
+              "initial": {
+                "default": false,
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "type"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]*$",
+                "description": "A stable identifier, for example \"player\" or \"level-1\"."
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "type": {
+                "type": "string",
+                "const": "text"
+              },
+              "initial": {
+                "default": "",
+                "type": "string",
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "id",
+              "type"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "assets": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]*$",
+                "description": "A stable identifier, for example \"player\" or \"level-1\"."
+              },
+              "kind": {
+                "type": "string",
+                "const": "image"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8388608,
+                "description": "A path relative to the project file, a data: URI, or builtin:<name> for a bundled asset."
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "source"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]*$",
+                "description": "A stable identifier, for example \"player\" or \"level-1\"."
+              },
+              "kind": {
+                "type": "string",
+                "const": "sound"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "source": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 8388608,
+                "description": "A path relative to the project file, a data: URI, or builtin:<name> for a bundled asset."
+              },
+              "volume": {
+                "default": 1,
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "loop": {
+                "default": false,
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "source"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "tilesets": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "image": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "The id of an image asset."
+          },
+          "tileWidth": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "tileHeight": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "margin": {
+            "default": 0,
+            "description": "Empty pixels around the outside of the grid in the image.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "spacing": {
+            "default": 0,
+            "description": "Empty pixels between neighbouring tiles in the image.",
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "tiles": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991,
+                  "description": "Position in the tileset image, counting from 0, left to right then top to bottom."
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "tags": {
+                  "default": [],
+                  "maxItems": 16,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "description": "A tile tag such as \"solid\", \"one-way\" or \"hazard\"."
+                  }
+                }
+              },
+              "required": [
+                "index"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "image",
+          "tileWidth",
+          "tileHeight"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "entities": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "size": {
+            "type": "object",
+            "properties": {
+              "width": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "height": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "width",
+              "height"
+            ],
+            "additionalProperties": false
+          },
+          "tags": {
+            "default": [],
+            "maxItems": 16,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 32,
+              "pattern": "^[a-z0-9][a-z0-9-]*$",
+              "description": "A tile tag such as \"solid\", \"one-way\" or \"hazard\"."
+            }
+          },
+          "properties": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "type": {
+                      "type": "string",
+                      "const": "number"
+                    },
+                    "initial": {
+                      "default": 0,
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "type": {
+                      "type": "string",
+                      "const": "boolean"
+                    },
+                    "initial": {
+                      "default": false,
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 120
+                    },
+                    "type": {
+                      "type": "string",
+                      "const": "text"
+                    },
+                    "initial": {
+                      "default": "",
+                      "type": "string",
+                      "maxLength": 500
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "components": {
+            "default": {},
+            "type": "object",
+            "properties": {
+              "sprite": {
+                "type": "object",
+                "properties": {
+                  "image": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "description": "The id of an image asset."
+                  },
+                  "frameWidth": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "frameHeight": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "offset": {
+                    "default": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "flipToFaceMovement": {
+                    "default": false,
+                    "description": "Mirror the art when the entity moves left, so only one direction has to be drawn.",
+                    "type": "boolean"
+                  },
+                  "defaultAnimation": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                  },
+                  "animations": {
+                    "default": [],
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z0-9][a-z0-9-]*$",
+                          "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 120
+                        },
+                        "frames": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "description": "Frame numbers in the sprite sheet, counting from 0."
+                        },
+                        "fps": {
+                          "default": 8,
+                          "type": "number",
+                          "exclusiveMinimum": 0,
+                          "maximum": 120
+                        },
+                        "loop": {
+                          "default": true,
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "frames"
+                      ],
+                      "additionalProperties": false
+                    }
+                  }
+                },
+                "required": [
+                  "image",
+                  "frameWidth",
+                  "frameHeight"
+                ],
+                "additionalProperties": false
+              },
+              "collider": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "default": "solid",
+                    "description": "solid pushes out of what it hits, trigger passes through and only reports the overlap to rules, none never collides.",
+                    "type": "string",
+                    "enum": [
+                      "solid",
+                      "trigger",
+                      "none"
+                    ]
+                  },
+                  "collidesWithTiles": {
+                    "default": true,
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              },
+              "movement": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "const": "platform"
+                      },
+                      "controlledBy": {
+                        "default": "player",
+                        "description": "player reads the input actions from the project settings. rules means only event rules move this entity.",
+                        "type": "string",
+                        "enum": [
+                          "player",
+                          "rules"
+                        ]
+                      },
+                      "maxSpeed": {
+                        "default": 90,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "acceleration": {
+                        "default": 600,
+                        "description": "Pixels per second squared. 0 means the entity reaches its top speed instantly.",
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "deceleration": {
+                        "default": 900,
+                        "description": "Pixels per second squared. 0 means the entity reaches its top speed instantly.",
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "airControl": {
+                        "default": 0.7,
+                        "description": "How much of the acceleration still applies while in the air, from 0 to 1.",
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "gravity": {
+                        "default": 900,
+                        "description": "Downward acceleration while rising.",
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "fallGravityMultiplier": {
+                        "default": 1.7,
+                        "description": "Falling is faster than rising by this factor. It is the single biggest reason a jump feels solid rather than floaty.",
+                        "type": "number",
+                        "minimum": 1
+                      },
+                      "maxFallSpeed": {
+                        "default": 320,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "jumpHeight": {
+                        "default": 44,
+                        "description": "How high a jump reaches, in pixels.",
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "jumpCount": {
+                        "default": 1,
+                        "description": "How many jumps are available before touching the ground again. 2 is a double jump.",
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 8
+                      },
+                      "variableJumpHeight": {
+                        "default": true,
+                        "description": "Releasing the jump button early cuts the jump short.",
+                        "type": "boolean"
+                      },
+                      "coyoteTime": {
+                        "default": 0.1,
+                        "description": "A jump still works for this long after walking off a ledge.",
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "jumpBufferTime": {
+                        "default": 0.12,
+                        "description": "A jump pressed this long before landing still fires on landing.",
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "patrol": {
+                        "description": "Walk back and forth without any event rules. Used by most simple enemies.",
+                        "type": "object",
+                        "properties": {
+                          "direction": {
+                            "default": "left",
+                            "type": "string",
+                            "enum": [
+                              "left",
+                              "right"
+                            ]
+                          },
+                          "turnAtWalls": {
+                            "default": true,
+                            "type": "boolean"
+                          },
+                          "turnAtLedges": {
+                            "default": true,
+                            "type": "boolean"
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "required": [
+                      "mode"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "mode": {
+                        "type": "string",
+                        "const": "free"
+                      },
+                      "controlledBy": {
+                        "default": "player",
+                        "description": "player reads the input actions from the project settings. rules means only event rules move this entity.",
+                        "type": "string",
+                        "enum": [
+                          "player",
+                          "rules"
+                        ]
+                      },
+                      "maxSpeed": {
+                        "default": 90,
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "acceleration": {
+                        "default": 600,
+                        "description": "Pixels per second squared. 0 means the entity reaches its top speed instantly.",
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "deceleration": {
+                        "default": 900,
+                        "description": "Pixels per second squared. 0 means the entity reaches its top speed instantly.",
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "axes": {
+                        "default": "both",
+                        "type": "string",
+                        "enum": [
+                          "both",
+                          "horizontal",
+                          "vertical"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "mode"
+                    ],
+                    "additionalProperties": false
+                  }
+                ],
+                "description": "platform adds gravity, ground detection and jumping. free moves on both axes with no gravity, and is not implemented by the runtime yet."
+              },
+              "text": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "default": "Text",
+                    "description": "The text to show. {score} is replaced by the value of the variable called score.",
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "color": {
+                    "default": "#ffffff",
+                    "type": "string",
+                    "pattern": "^#[0-9a-fA-F]{6}$",
+                    "description": "A colour written as #rrggbb."
+                  },
+                  "align": {
+                    "default": "left",
+                    "type": "string",
+                    "enum": [
+                      "left",
+                      "center",
+                      "right"
+                    ]
+                  },
+                  "size": {
+                    "default": "normal",
+                    "type": "string",
+                    "enum": [
+                      "small",
+                      "normal",
+                      "large"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "size"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "globalEvents": {
+      "default": [],
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+          },
+          "name": {
+            "description": "What this rule is for, in plain words.",
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "enabled": {
+            "default": true,
+            "type": "boolean"
+          },
+          "once": {
+            "default": false,
+            "description": "Run at most once per scene.",
+            "type": "boolean"
+          },
+          "when": {
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "game-starts"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "scene-starts"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "every-frame"
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "every-seconds"
+                  },
+                  "seconds": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  }
+                },
+                "required": [
+                  "type",
+                  "seconds"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "action-pressed"
+                  },
+                  "action": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                  }
+                },
+                "required": [
+                  "type",
+                  "action"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "action-released"
+                  },
+                  "action": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                  }
+                },
+                "required": [
+                  "type",
+                  "action"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "collides"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  },
+                  "with": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject",
+                  "with"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "collision-ends"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  },
+                  "with": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject",
+                  "with"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "touches-tile"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  },
+                  "tag": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "description": "A tile tag such as \"solid\", \"one-way\" or \"hazard\"."
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject",
+                  "tag"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "variable-changes"
+                  },
+                  "variable": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                  }
+                },
+                "required": [
+                  "type",
+                  "variable"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "entity-spawned"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "entity-destroyed"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "leaves-scene"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  },
+                  "edge": {
+                    "default": "any",
+                    "type": "string",
+                    "enum": [
+                      "any",
+                      "top",
+                      "bottom",
+                      "left",
+                      "right"
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "lands"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "jumps"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "clicked"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "if": {
+            "default": [],
+            "maxItems": 16,
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "variable-is"
+                    },
+                    "variable": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "operator": {
+                      "default": "equals",
+                      "type": "string",
+                      "enum": [
+                        "equals",
+                        "not-equals",
+                        "at-least",
+                        "at-most",
+                        "greater-than",
+                        "less-than"
+                      ]
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 500
+                        }
+                      ]
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "variable",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "property-is"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "property": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "operator": {
+                      "default": "equals",
+                      "type": "string",
+                      "enum": [
+                        "equals",
+                        "not-equals",
+                        "at-least",
+                        "at-most",
+                        "greater-than",
+                        "less-than"
+                      ]
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 500
+                        }
+                      ]
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target",
+                    "property",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "has-tag"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "tag": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target",
+                    "tag"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "entity-exists"
+                    },
+                    "entity": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "entity"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "action-held"
+                    },
+                    "action": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "action"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "distance-is"
+                    },
+                    "from": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "to": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "operator": {
+                      "default": "at-most",
+                      "type": "string",
+                      "enum": [
+                        "at-most",
+                        "at-least"
+                      ]
+                    },
+                    "pixels": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "from",
+                    "to",
+                    "pixels"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "chance"
+                    },
+                    "percent": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "percent"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "current-scene-is"
+                    },
+                    "scene": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "scene"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "is-on-ground"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "is-falling"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          },
+          "then": {
+            "minItems": 1,
+            "maxItems": 32,
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "destroy"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "spawn"
+                    },
+                    "entity": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "The id of an entity prototype."
+                    },
+                    "x": {
+                      "default": 0,
+                      "type": "number"
+                    },
+                    "y": {
+                      "default": 0,
+                      "type": "number"
+                    },
+                    "relativeTo": {
+                      "description": "Place it relative to this entity instead of the top left of the scene.",
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "entity"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "move"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "mode": {
+                      "default": "set",
+                      "type": "string",
+                      "enum": [
+                        "set",
+                        "add"
+                      ]
+                    },
+                    "x": {
+                      "description": "Horizontal speed in pixels per second.",
+                      "type": "number"
+                    },
+                    "y": {
+                      "description": "Vertical speed in pixels per second.",
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "teleport"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "x": {
+                      "default": 0,
+                      "type": "number"
+                    },
+                    "y": {
+                      "default": 0,
+                      "type": "number"
+                    },
+                    "relativeTo": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "jump"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "height": {
+                      "description": "Jump this high instead of the height set on the entity.",
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "set-variable"
+                    },
+                    "variable": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 500
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "variable",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "change-variable"
+                    },
+                    "variable": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "operator": {
+                      "default": "add",
+                      "type": "string",
+                      "enum": [
+                        "add",
+                        "subtract",
+                        "multiply",
+                        "divide",
+                        "set"
+                      ]
+                    },
+                    "value": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "variable",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "set-property"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "property": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "value": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "string",
+                          "maxLength": 500
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target",
+                    "property",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "change-property"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "property": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "operator": {
+                      "default": "add",
+                      "type": "string",
+                      "enum": [
+                        "add",
+                        "subtract",
+                        "multiply",
+                        "divide",
+                        "set"
+                      ]
+                    },
+                    "value": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target",
+                    "property",
+                    "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "play-animation"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "animation": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target",
+                    "animation"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "set-visible"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "visible": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target",
+                    "visible"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "play-sound"
+                    },
+                    "sound": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "volume": {
+                      "default": 1,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "sound"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "stop-sound"
+                    },
+                    "sound": {
+                      "description": "Leave empty to stop every sound.",
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "show-message"
+                    },
+                    "text": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "seconds": {
+                      "default": 2,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 60,
+                      "description": "A duration in seconds."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "text"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "go-to-scene"
+                    },
+                    "scene": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "scene"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "restart-scene"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "set-camera-target"
+                    },
+                    "target": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "target"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "shake-camera"
+                    },
+                    "strength": {
+                      "default": 4,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 64
+                    },
+                    "seconds": {
+                      "default": 0.3,
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 10,
+                      "description": "A duration in seconds."
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "set-tile"
+                    },
+                    "layer": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "column": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "row": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "tile": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "A tile number, or null to clear it."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "layer",
+                    "column",
+                    "row",
+                    "tile"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "enable-rule"
+                    },
+                    "rule": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "rule"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "disable-rule"
+                    },
+                    "rule": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "rule"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "wait"
+                    },
+                    "seconds": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 60,
+                      "description": "A duration in seconds."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "seconds"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "id",
+          "when",
+          "then"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "scenes": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "tileSize": {
+            "default": 16,
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "size": {
+            "type": "object",
+            "properties": {
+              "columns": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Width of the scene in tiles."
+              },
+              "rows": {
+                "type": "integer",
+                "exclusiveMinimum": 0,
+                "maximum": 9007199254740991,
+                "description": "Height of the scene in tiles."
+              }
+            },
+            "required": [
+              "columns",
+              "rows"
+            ],
+            "additionalProperties": false
+          },
+          "background": {
+            "default": {},
+            "type": "object",
+            "properties": {
+              "color": {
+                "default": "#10141c",
+                "type": "string",
+                "pattern": "^#[0-9a-fA-F]{6}$",
+                "description": "A colour written as #rrggbb."
+              },
+              "image": {
+                "description": "An image asset drawn behind every layer.",
+                "type": "string",
+                "maxLength": 64,
+                "pattern": "^[a-z0-9][a-z0-9-]*$"
+              }
+            },
+            "additionalProperties": false
+          },
+          "layers": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9-]*$",
+                  "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "tileset": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9-]*$",
+                  "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                },
+                "collides": {
+                  "default": false,
+                  "description": "Whether entities are stopped by the solid tiles on this layer.",
+                  "type": "boolean"
+                },
+                "visible": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "parallax": {
+                  "default": {
+                    "x": 1,
+                    "y": 1
+                  },
+                  "description": "How fast the layer scrolls compared to the world. 1 moves with it, 0.5 lags behind.",
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "x",
+                    "y"
+                  ],
+                  "additionalProperties": false
+                },
+                "drawEntitiesAfter": {
+                  "default": false,
+                  "description": "Draw entities on top of this layer. Layers after it are drawn in front of them.",
+                  "type": "boolean"
+                },
+                "legend": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "pattern": "^[!-~]$"
+                  },
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "description": "Which tile each character stands for. null means an empty cell."
+                },
+                "rows": {
+                  "minItems": 1,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 1024
+                  },
+                  "description": "One string per row of the grid, each exactly as long as the scene is wide."
+                }
+              },
+              "required": [
+                "id",
+                "tileset",
+                "legend",
+                "rows"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "entities": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9-]*$",
+                  "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "prototype": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9-]*$",
+                  "description": "The id of the entity prototype this is a copy of."
+                },
+                "x": {
+                  "type": "number",
+                  "description": "Left edge of the collision box, in pixels."
+                },
+                "y": {
+                  "type": "number",
+                  "description": "Top edge of the collision box, in pixels."
+                },
+                "fixedToCamera": {
+                  "default": false,
+                  "description": "Stay put on screen instead of scrolling with the level. Used for score labels.",
+                  "type": "boolean"
+                },
+                "tags": {
+                  "default": [],
+                  "maxItems": 16,
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "description": "A tile tag such as \"solid\", \"one-way\" or \"hazard\"."
+                  }
+                },
+                "properties": {
+                  "default": {},
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "maxLength": 64,
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                  },
+                  "additionalProperties": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      }
+                    ]
+                  }
+                },
+                "overrides": {
+                  "default": {},
+                  "type": "object",
+                  "properties": {
+                    "sprite": {
+                      "type": "object",
+                      "properties": {
+                        "image": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z0-9][a-z0-9-]*$",
+                          "description": "The id of an image asset."
+                        },
+                        "frameWidth": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "frameHeight": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "offset": {
+                          "type": "object",
+                          "properties": {
+                            "x": {
+                              "type": "number"
+                            },
+                            "y": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "x",
+                            "y"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "flipToFaceMovement": {
+                          "type": "boolean"
+                        },
+                        "defaultAnimation": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z0-9][a-z0-9-]*$",
+                          "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                        },
+                        "animations": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "maxLength": 64,
+                                "pattern": "^[a-z0-9][a-z0-9-]*$",
+                                "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                              },
+                              "name": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 120
+                              },
+                              "frames": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "description": "Frame numbers in the sprite sheet, counting from 0."
+                              },
+                              "fps": {
+                                "default": 8,
+                                "type": "number",
+                                "exclusiveMinimum": 0,
+                                "maximum": 120
+                              },
+                              "loop": {
+                                "default": true,
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "frames"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "collider": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "solid",
+                            "trigger",
+                            "none"
+                          ]
+                        },
+                        "collidesWithTiles": {
+                          "type": "boolean"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "movement": {
+                      "type": "object",
+                      "properties": {
+                        "controlledBy": {
+                          "type": "string",
+                          "enum": [
+                            "player",
+                            "rules"
+                          ]
+                        },
+                        "maxSpeed": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "acceleration": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "deceleration": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "airControl": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        },
+                        "gravity": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "fallGravityMultiplier": {
+                          "type": "number",
+                          "minimum": 1
+                        },
+                        "maxFallSpeed": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "jumpHeight": {
+                          "type": "number",
+                          "minimum": 0
+                        },
+                        "jumpCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 8
+                        },
+                        "variableJumpHeight": {
+                          "type": "boolean"
+                        },
+                        "coyoteTime": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "description": "A duration in seconds."
+                        },
+                        "jumpBufferTime": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1,
+                          "description": "A duration in seconds."
+                        },
+                        "patrol": {
+                          "description": "Walk back and forth without any event rules. Used by most simple enemies.",
+                          "type": "object",
+                          "properties": {
+                            "direction": {
+                              "default": "left",
+                              "type": "string",
+                              "enum": [
+                                "left",
+                                "right"
+                              ]
+                            },
+                            "turnAtWalls": {
+                              "default": true,
+                              "type": "boolean"
+                            },
+                            "turnAtLedges": {
+                              "default": true,
+                              "type": "boolean"
+                            }
+                          },
+                          "additionalProperties": false
+                        },
+                        "axes": {
+                          "type": "string",
+                          "enum": [
+                            "both",
+                            "horizontal",
+                            "vertical"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "text": {
+                      "type": "object",
+                      "properties": {
+                        "content": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "color": {
+                          "type": "string",
+                          "pattern": "^#[0-9a-fA-F]{6}$",
+                          "description": "A colour written as #rrggbb."
+                        },
+                        "align": {
+                          "type": "string",
+                          "enum": [
+                            "left",
+                            "center",
+                            "right"
+                          ]
+                        },
+                        "size": {
+                          "type": "string",
+                          "enum": [
+                            "small",
+                            "normal",
+                            "large"
+                          ]
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "prototype",
+                "x",
+                "y"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "camera": {
+            "default": {
+              "mode": "fixed"
+            },
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "const": "follow"
+                  },
+                  "target": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  },
+                  "deadZone": {
+                    "default": {
+                      "width": 64,
+                      "height": 40
+                    },
+                    "description": "The camera holds still while the target stays inside this box in the middle of the screen.",
+                    "type": "object",
+                    "properties": {
+                      "width": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      },
+                      "height": {
+                        "type": "number",
+                        "exclusiveMinimum": 0
+                      }
+                    },
+                    "required": [
+                      "width",
+                      "height"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "smoothing": {
+                    "default": 0.15,
+                    "description": "How gently the camera catches up. 0 is instant.",
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 1
+                  },
+                  "offset": {
+                    "default": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "clampToScene": {
+                    "default": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "mode",
+                  "target"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "const": "fixed"
+                  },
+                  "x": {
+                    "default": 0,
+                    "type": "number"
+                  },
+                  "y": {
+                    "default": 0,
+                    "type": "number"
+                  },
+                  "clampToScene": {
+                    "default": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "mode": {
+                    "type": "string",
+                    "const": "auto-scroll"
+                  },
+                  "speed": {
+                    "default": {
+                      "x": 20,
+                      "y": 0
+                    },
+                    "description": "Pixels per second.",
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "offset": {
+                    "default": {
+                      "x": 0,
+                      "y": 0
+                    },
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    },
+                    "required": [
+                      "x",
+                      "y"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "clampToScene": {
+                    "default": true,
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "mode"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          },
+          "events": {
+            "default": [],
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9-]*$",
+                  "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                },
+                "name": {
+                  "description": "What this rule is for, in plain words.",
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 120
+                },
+                "enabled": {
+                  "default": true,
+                  "type": "boolean"
+                },
+                "once": {
+                  "default": false,
+                  "description": "Run at most once per scene.",
+                  "type": "boolean"
+                },
+                "when": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "game-starts"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "scene-starts"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "every-frame"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "every-seconds"
+                        },
+                        "seconds": {
+                          "type": "number",
+                          "exclusiveMinimum": 0
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "seconds"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "action-pressed"
+                        },
+                        "action": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z0-9][a-z0-9-]*$",
+                          "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "action"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "action-released"
+                        },
+                        "action": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z0-9][a-z0-9-]*$",
+                          "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "action"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "collides"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        },
+                        "with": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "subject",
+                        "with"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "collision-ends"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        },
+                        "with": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "subject",
+                        "with"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "touches-tile"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        },
+                        "tag": {
+                          "type": "string",
+                          "maxLength": 32,
+                          "pattern": "^[a-z0-9][a-z0-9-]*$",
+                          "description": "A tile tag such as \"solid\", \"one-way\" or \"hazard\"."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "subject",
+                        "tag"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "variable-changes"
+                        },
+                        "variable": {
+                          "type": "string",
+                          "maxLength": 64,
+                          "pattern": "^[a-z0-9][a-z0-9-]*$",
+                          "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "variable"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "entity-spawned"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "subject"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "entity-destroyed"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "subject"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "leaves-scene"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        },
+                        "edge": {
+                          "default": "any",
+                          "type": "string",
+                          "enum": [
+                            "any",
+                            "top",
+                            "bottom",
+                            "left",
+                            "right"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "subject"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "lands"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "subject"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "jumps"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "subject"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "clicked"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "subject"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                },
+                "if": {
+                  "default": [],
+                  "maxItems": 16,
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "variable-is"
+                          },
+                          "variable": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "operator": {
+                            "default": "equals",
+                            "type": "string",
+                            "enum": [
+                              "equals",
+                              "not-equals",
+                              "at-least",
+                              "at-most",
+                              "greater-than",
+                              "less-than"
+                            ]
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "string",
+                                "maxLength": 500
+                              }
+                            ]
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "variable",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "property-is"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "property": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "operator": {
+                            "default": "equals",
+                            "type": "string",
+                            "enum": [
+                              "equals",
+                              "not-equals",
+                              "at-least",
+                              "at-most",
+                              "greater-than",
+                              "less-than"
+                            ]
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "string",
+                                "maxLength": 500
+                              }
+                            ]
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target",
+                          "property",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "has-tag"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "tag": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target",
+                          "tag"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "entity-exists"
+                          },
+                          "entity": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "entity"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "action-held"
+                          },
+                          "action": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "action"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "distance-is"
+                          },
+                          "from": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "to": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "operator": {
+                            "default": "at-most",
+                            "type": "string",
+                            "enum": [
+                              "at-most",
+                              "at-least"
+                            ]
+                          },
+                          "pixels": {
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "from",
+                          "to",
+                          "pixels"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "chance"
+                          },
+                          "percent": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 100
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "percent"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "current-scene-is"
+                          },
+                          "scene": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "scene"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "is-on-ground"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "is-falling"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                },
+                "then": {
+                  "minItems": 1,
+                  "maxItems": 32,
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "destroy"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "spawn"
+                          },
+                          "entity": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "The id of an entity prototype."
+                          },
+                          "x": {
+                            "default": 0,
+                            "type": "number"
+                          },
+                          "y": {
+                            "default": 0,
+                            "type": "number"
+                          },
+                          "relativeTo": {
+                            "description": "Place it relative to this entity instead of the top left of the scene.",
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "entity"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "move"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "mode": {
+                            "default": "set",
+                            "type": "string",
+                            "enum": [
+                              "set",
+                              "add"
+                            ]
+                          },
+                          "x": {
+                            "description": "Horizontal speed in pixels per second.",
+                            "type": "number"
+                          },
+                          "y": {
+                            "description": "Vertical speed in pixels per second.",
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "teleport"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "x": {
+                            "default": 0,
+                            "type": "number"
+                          },
+                          "y": {
+                            "default": 0,
+                            "type": "number"
+                          },
+                          "relativeTo": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "jump"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "height": {
+                            "description": "Jump this high instead of the height set on the entity.",
+                            "type": "number",
+                            "minimum": 0
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "set-variable"
+                          },
+                          "variable": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "string",
+                                "maxLength": 500
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "variable",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "change-variable"
+                          },
+                          "variable": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "operator": {
+                            "default": "add",
+                            "type": "string",
+                            "enum": [
+                              "add",
+                              "subtract",
+                              "multiply",
+                              "divide",
+                              "set"
+                            ]
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "variable",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "set-property"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "property": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "value": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "boolean"
+                              },
+                              {
+                                "type": "string",
+                                "maxLength": 500
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target",
+                          "property",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "change-property"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "property": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "operator": {
+                            "default": "add",
+                            "type": "string",
+                            "enum": [
+                              "add",
+                              "subtract",
+                              "multiply",
+                              "divide",
+                              "set"
+                            ]
+                          },
+                          "value": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target",
+                          "property",
+                          "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "play-animation"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "animation": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target",
+                          "animation"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "set-visible"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "visible": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target",
+                          "visible"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "play-sound"
+                          },
+                          "sound": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "volume": {
+                            "default": 1,
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 1
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "sound"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "stop-sound"
+                          },
+                          "sound": {
+                            "description": "Leave empty to stop every sound.",
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "show-message"
+                          },
+                          "text": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200
+                          },
+                          "seconds": {
+                            "default": 2,
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 60,
+                            "description": "A duration in seconds."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "text"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "go-to-scene"
+                          },
+                          "scene": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "scene"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "restart-scene"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "set-camera-target"
+                          },
+                          "target": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "target"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "shake-camera"
+                          },
+                          "strength": {
+                            "default": 4,
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 64
+                          },
+                          "seconds": {
+                            "default": 0.3,
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 10,
+                            "description": "A duration in seconds."
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "set-tile"
+                          },
+                          "layer": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "column": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "row": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "tile": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "A tile number, or null to clear it."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "layer",
+                          "column",
+                          "row",
+                          "tile"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "enable-rule"
+                          },
+                          "rule": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "rule"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "disable-rule"
+                          },
+                          "rule": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "rule"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "wait"
+                          },
+                          "seconds": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 60,
+                            "description": "A duration in seconds."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "seconds"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "id",
+                "when",
+                "then"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "size"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "formatVersion",
+    "meta",
+    "settings",
+    "scenes"
+  ],
+  "additionalProperties": false,
+  "title": "PinForge project",
+  "description": "A complete PinForge game: settings, assets, entities and scenes in one file."
+}
