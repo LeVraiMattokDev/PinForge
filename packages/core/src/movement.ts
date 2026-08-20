@@ -1,4 +1,4 @@
-import type { PlatformMovementComponent } from '@pinforge/schema';
+import type { FreeMovementComponent, PlatformMovementComponent } from '@pinforge/schema';
 import { groundAhead, moveOnX, moveOnY, standingOn } from './collision.js';
 import type { InputState } from './input.js';
 import type { Tilemap } from './tilemap.js';
@@ -25,8 +25,56 @@ export function stepMovement(
     moveOnY(entity, entity.velocityY * seconds, map, collide);
     return;
   }
-  if (movement.mode !== 'platform') return;
+  if (movement.mode === 'free') {
+    stepFree(entity, movement, map, input, seconds, collide);
+    return;
+  }
   stepPlatform(entity, movement, map, input, seconds, collide);
+}
+
+/**
+ * Movement with no gravity and no ground: a puzzle game, a top down game, or a
+ * shoot-em-up alongside an auto scrolling camera. The same acceleration and
+ * deceleration mean an acceleration of 0 gives the instant, snappy response a
+ * puzzle wants, and a high number gives something that drifts.
+ */
+function stepFree(
+  entity: Entity,
+  movement: FreeMovementComponent,
+  map: Tilemap,
+  input: InputState,
+  seconds: number,
+  collide: boolean,
+): void {
+  const byPlayer = movement.controlledBy === 'player';
+  const horizontal = movement.axes !== 'vertical';
+  const vertical = movement.axes !== 'horizontal';
+
+  if (byPlayer) {
+    const wantedX = horizontal
+      ? (input.isHeld('right') ? 1 : 0) - (input.isHeld('left') ? 1 : 0)
+      : 0;
+    const wantedY = vertical ? (input.isHeld('down') ? 1 : 0) - (input.isHeld('up') ? 1 : 0) : 0;
+    entity.velocityX = approach(
+      entity.velocityX,
+      wantedX * movement.maxSpeed,
+      (wantedX === 0 ? movement.deceleration : movement.acceleration) * seconds,
+    );
+    entity.velocityY = approach(
+      entity.velocityY,
+      wantedY * movement.maxSpeed,
+      (wantedY === 0 ? movement.deceleration : movement.acceleration) * seconds,
+    );
+    if (wantedX !== 0) entity.facing = wantedX > 0 ? 1 : -1;
+  }
+
+  if (!horizontal) entity.velocityX = 0;
+  if (!vertical) entity.velocityY = 0;
+
+  // X to completion, then Y to completion, for the same reason as platforming.
+  if (moveOnX(entity, entity.velocityX * seconds, map, collide)) entity.velocityX = 0;
+  const hit = moveOnY(entity, entity.velocityY * seconds, map, collide);
+  if (hit.below || hit.above) entity.velocityY = 0;
 }
 
 function stepPlatform(

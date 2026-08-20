@@ -287,3 +287,91 @@ describe('determinism', () => {
     expect(snapshot(advanced)).toEqual(snapshot(stepped));
   });
 });
+
+describe('free movement', () => {
+  const floater = {
+    id: 'floater',
+    size: { width: 12, height: 12 },
+    tags: ['player'],
+    components: {
+      collider: {},
+      movement: { mode: 'free' as const, maxSpeed: 60, acceleration: 0, deceleration: 0 },
+    },
+  };
+
+  it('ignores gravity and stays where it is left', () => {
+    const game = makeGame({
+      prototypes: [floater],
+      entities: [{ id: 'floater-1', prototype: 'floater', x: 32, y: 32 }],
+    });
+    steps(game, 120);
+
+    const entity = game.world.entities[0]!;
+    expect(entity.y).toBe(32);
+    expect(entity.onGround).toBe(false);
+  });
+
+  it('moves on both axes and stops against tiles', () => {
+    const game = makeGame({
+      prototypes: [floater],
+      entities: [{ id: 'floater-1', prototype: 'floater', x: 32, y: 32 }],
+    });
+
+    game.input.press('right');
+    game.input.press('down');
+    steps(game, 120);
+
+    const entity = game.world.entities[0]!;
+    // With no acceleration the response is instant, which is what a puzzle wants.
+    expect(entity.x).toBeGreaterThan(32);
+    // The floor is the bottom row, so it comes to rest exactly on top of it.
+    expect(entity.y).toBe(80 - 12);
+  });
+
+  it('can be locked to one axis', () => {
+    const game = makeGame({
+      prototypes: [
+        {
+          ...floater,
+          components: {
+            ...floater.components,
+            movement: { ...floater.components.movement, axes: 'horizontal' as const },
+          },
+        },
+      ],
+      entities: [{ id: 'floater-1', prototype: 'floater', x: 32, y: 32 }],
+    });
+
+    game.input.press('down');
+    game.input.press('right');
+    steps(game, 60);
+
+    expect(game.world.entities[0]!.y).toBe(32);
+    expect(game.world.entities[0]!.x).toBeGreaterThan(32);
+  });
+});
+
+describe('the auto scrolling camera', () => {
+  it('moves by itself and stops at the edge of the scene', () => {
+    const game = makeGame({
+      camera: { mode: 'auto-scroll', speed: { x: 60, y: 0 } },
+    });
+    // The scene is 160 pixels wide and so is the view, so there is nowhere to go.
+    steps(game, 60);
+    expect(game.world.camera.x).toBe(0);
+
+    const roomy = makeGame({
+      rows: [
+        '.'.repeat(10),
+        '.'.repeat(10),
+        '.'.repeat(10),
+        '.'.repeat(10),
+        '.'.repeat(10),
+        '#'.repeat(10),
+      ],
+      camera: { mode: 'auto-scroll', speed: { x: 60, y: 0 }, clampToScene: false },
+    });
+    steps(roomy, 60);
+    expect(roomy.world.camera.x).toBeGreaterThan(55);
+  });
+});

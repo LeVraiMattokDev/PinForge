@@ -59,14 +59,6 @@ export class Game implements RuntimeHost {
     readonly project: Project,
     options: GameOptions = {},
   ) {
-    for (const prototype of project.entities) {
-      if (prototype.components.movement?.mode === 'free') {
-        throw new Error(
-          `"${prototype.id}" uses free movement, which this version of PinForge cannot run yet. Use platform movement for now.`,
-        );
-      }
-    }
-
     this.random = new Random(options.seed ?? 1);
     this.audio = options.audio ?? silentAudio;
     this.assets = options.assets ?? noAssets;

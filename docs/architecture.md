@@ -156,10 +156,9 @@ feels good, and the target user must get them without knowing they exist. A jump
 is authored as a height in pixels; the runtime derives the impulse.
 
 `free` moves on both axes with no gravity: a puzzle game with no acceleration, a
-shoot-em-up with an auto scrolling camera. It is defined in the format from
-version 1 so that adding it in phase 4 changes no project files. Until then a
-project that uses it is refused when the game loads, by name, rather than
-quietly standing still.
+shoot-em-up with an auto scrolling camera. It was defined in the format from
+version 1 and implemented later, and adding it changed no project files, which
+is the whole argument for settling the format first.
 
 A third genre should be a third mode of this component, or a new field on it.
 A second runtime is the wrong answer.

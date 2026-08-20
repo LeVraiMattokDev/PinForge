@@ -35,18 +35,18 @@ gets on with being a game engine.
 
 ## Status
 
-Phases 0, 1, 2 and most of 4 of six are complete: the project format, the
-runtime that plays it, a playable example game written by hand, the command
-line, and export to a single HTML file. The format came first because it is the
-contract every other package agrees on.
+Phases 0, 1, 2 and 4 of six are complete: the project format, the runtime that
+plays it, a playable example game written by hand, the command line, export to a
+single HTML file, and both movement modes. The format came first because it is
+the contract every other package agrees on.
 
 | Phase | What                                                                 | State |
 | ----- | -------------------------------------------------------------------- | ----- |
 | 0     | `packages/schema`: the format, validation, migrations, JSON Schema   | done  |
-| 1     | `packages/core`: fixed timestep runtime, collision, movement, events | next  |
-| 2     | `examples/first-game` written by hand, plus the CLI to run it        |       |
-| 3     | `packages/editor`: the visual editor                                 |       |
-| 4     | Export to standalone HTML, then free movement and auto scroll        |       |
+| 1     | `packages/core`: fixed timestep runtime, collision, movement, events | done  |
+| 2     | `examples/first-game` written by hand, plus the CLI to run it        | done  |
+| 3     | `packages/editor`: the visual editor                                 | next  |
+| 4     | Export to standalone HTML, free movement, auto scrolling camera      | done  |
 | 5     | `packages/mcp`: authoring over the Model Context Protocol            |       |
 
 There is no editor yet, so a game is made by editing one JSON file. That part

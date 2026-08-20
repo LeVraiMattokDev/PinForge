@@ -197,9 +197,10 @@ The runtime works out the impulse from the height and the gravity.
 scripting. An optional `patrol` block makes an entity walk back and forth on its
 own, turning at walls and at ledges, which is what most simple enemies need.
 
-`free` moves on both axes with no gravity, and is what a puzzle game or a
-shoot-em-up uses. It is part of the format from version 1 so that projects do not
-change when it ships, but the runtime does not implement it yet.
+`free` moves on both axes with no gravity, and is what a puzzle game, a top down
+game or a shoot-em-up uses. It has `maxSpeed`, `acceleration`, `deceleration`,
+`controlledBy` and `axes`, which locks it to `horizontal` or `vertical` movement.
+An acceleration of 0 means instant, which is what a grid puzzle wants.
 
 **`text`** draws a line of text instead of a sprite, in a built in font.
 `{score}` inside `content` is replaced by the value of that variable, which is

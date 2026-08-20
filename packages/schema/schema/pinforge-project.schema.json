@@ -855,7 +855,7 @@
                     "additionalProperties": false
                   }
                 ],
-                "description": "platform adds gravity, ground detection and jumping. free moves on both axes with no gravity, and is not implemented by the runtime yet."
+                "description": "platform adds gravity, ground detection and jumping. free moves on both axes with no gravity, for a puzzle or top down game."
               },
               "text": {
                 "type": "object",

@@ -33,6 +33,10 @@ project file changes, and every change comes with a migration.
   default, one-way tiles, patrolling without event rules, three camera modes,
   the rule engine, and rendering behind a `Renderer` interface with a Canvas2D
   implementation. Twenty-nine deterministic tests.
+- Free movement: both axes, no gravity, optionally locked to one axis, with an
+  acceleration of 0 meaning instant. Together with the auto scrolling camera it
+  is what a puzzle game or a shoot-em-up needs, and adding it changed no project
+  files, which was the point of settling the format first.
 - `@pinforge/cli`: `pinforge new`, `run`, `export` and `validate`, plus a
   starter project with placeholder art so a new game is playable immediately.
 - Export to a single HTML file with every asset inlined as a data URI and

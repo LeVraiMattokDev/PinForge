@@ -117,10 +117,6 @@ const freeMovementShape = {
 /**
  * The one component that differs between 2D genres, and the reason there is a
  * single runtime rather than one per genre.
- *
- * "platform" is implemented now. "free" is part of the format from version 1 so
- * that adding it in phase 4 changes no files, but the runtime rejects it until
- * then.
  */
 export const PlatformMovementComponent = z.strictObject({
   mode: z.literal('platform'),
@@ -136,7 +132,7 @@ export const MovementComponent = z
   .discriminatedUnion('mode', [PlatformMovementComponent, FreeMovementComponent])
   .meta({
     description:
-      'platform adds gravity, ground detection and jumping. free moves on both axes with no gravity, and is not implemented by the runtime yet.',
+      'platform adds gravity, ground detection and jumping. free moves on both axes with no gravity, for a puzzle or top down game.',
   });
 
 export const MOVEMENT_MODES = ['platform', 'free'] as const;

@@ -84,8 +84,10 @@ If you want to change them, they are named in plain words in the inspector.
 You set how high a jump goes in **pixels**, not in some unit of force. Sixteen
 pixels is one tile.
 
-**Free movement**, for a puzzle game or a top down game: it moves in any
-direction and gravity does not apply. This one is not finished yet.
+**Free movement**, for a puzzle game, a top down game or a shoot-em-up: it moves
+in any direction and gravity does not apply. Set how quickly it speeds up to 0
+and it responds instantly, which is what a puzzle wants; set it high and it
+drifts. You can also lock it to one axis.
 
 ## Event
 
