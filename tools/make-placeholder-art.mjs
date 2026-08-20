@@ -85,12 +85,6 @@ function canvas(width, height) {
         }
       }
     },
-    triangle(x, y, size, colour) {
-      for (let row = 0; row < size; row += 1) {
-        const half = Math.round(((row + 1) / size) * (size / 2));
-        for (let dx = -half; dx <= half; dx += 1) put(x + dx, y + size - 1 - row, colour);
-      }
-    },
   };
 }
 
@@ -115,8 +109,16 @@ function tileset() {
   // 2: wooden platform, drawn only along the top
   image.rect(32, 0, 16, 4, PLANK);
   image.rect(32, 4, 16, 2, PLANK_DARK);
-  // 3: spikes
-  for (let i = 0; i < 4; i += 1) image.triangle(48 + 2 + i * 4, 8, 8, SPIKE);
+  // 3: spikes. Each spike is kept strictly inside its own four pixel column, or
+  // it bleeds into the neighbouring tile and appears under whatever is drawn
+  // there. That is exactly what happened the first time.
+  for (let i = 0; i < 4; i += 1) {
+    for (let row = 0; row < 8; row += 1) {
+      const width = Math.max(1, Math.round(((row + 1) / 8) * 4));
+      const left = 48 + i * 4 + Math.floor((4 - width) / 2);
+      for (let dx = 0; dx < width; dx += 1) image.put(left + dx, 8 + row, SPIKE);
+    }
+  }
   // 4: cloud
   image.disc(64 + 5, 9, 4, CLOUD);
   image.disc(64 + 10, 8, 5, CLOUD);

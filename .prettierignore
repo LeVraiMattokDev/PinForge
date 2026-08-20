@@ -8,3 +8,4 @@ packages/schema/schema/*.json
 # own test cannot read.
 docs/
 packages/cli/runtime/pinforge-runtime.js
+packages/editor/src/starter.generated.ts

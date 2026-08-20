@@ -8,3 +8,6 @@ coverage/
 
 # Generated at build time by packages/cli/scripts/build-runtime.mjs
 packages/cli/runtime/pinforge-runtime.js
+
+# Generated at build time by packages/editor/scripts/build-starter.mjs
+packages/editor/src/starter.generated.ts

@@ -35,41 +35,43 @@ gets on with being a game engine.
 
 ## Status
 
-Five of the six phases are done. Everything except the visual editor exists and
-is tested: the project format, the runtime, a playable example game written by
-hand, the command line, export to a single HTML file, both movement modes, and
-authoring over the Model Context Protocol. The format came first because it is
-the contract every other package agrees on.
+All six phases are done: the project format, the runtime, a playable example
+game written by hand, the visual editor, the command line, export to a single
+HTML file, both movement modes, and authoring over the Model Context Protocol.
+The format came first because it is the contract every other package agrees on.
 
 | Phase | What                                                                 | State |
 | ----- | -------------------------------------------------------------------- | ----- |
 | 0     | `packages/schema`: the format, validation, migrations, JSON Schema   | done  |
 | 1     | `packages/core`: fixed timestep runtime, collision, movement, events | done  |
 | 2     | `examples/first-game` written by hand, plus the CLI to run it        | done  |
-| 3     | `packages/editor`: the visual editor                                 | next  |
+| 3     | `packages/editor`: the visual editor                                 | done  |
 | 4     | Export to standalone HTML, free movement, auto scrolling camera      | done  |
 | 5     | `packages/mcp`: authoring over the Model Context Protocol            | done  |
-
-There is no editor yet, so a game is made by editing one JSON file. That part
-works end to end today:
 
 ```bash
 pnpm install && pnpm build
 
+# The editor. It opens on a game you can already play.
+pnpm --filter @pinforge/editor dev
+```
+
+![The PinForge editor](docs/images/editor.png)
+
+Or from the command line, without the editor:
+
+```bash
 # Play the example in a browser
 node packages/cli/dist/main.js run examples/first-game
 
-# Or start your own, from a playable starting point
+# Start your own, from a playable starting point
 node packages/cli/dist/main.js new my-game --name "My game"
-node packages/cli/dist/main.js run my-game
 
 # Ship it as one HTML file with nothing else to upload
 node packages/cli/dist/main.js export my-game --out my-game.html
 ```
 
-See [getting started](docs/getting-started.md) for the full walkthrough.
-
-A screenshot belongs here once there is an editor to screenshot.
+See [getting started](docs/getting-started.md) for the walkthrough.
 
 ## Documentation
 

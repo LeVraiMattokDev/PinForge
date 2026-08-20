@@ -1,0 +1,649 @@
+/*
+ * Calm, light and roomy. Professional engines are dense grey panels, and that
+ * density is exactly what puts off the person this editor is for. So: one
+ * accent colour, generous spacing, plain words, and nothing that looks like it
+ * needs a manual.
+ */
+:root {
+  --paper: #f7f6f3;
+  --card: #ffffff;
+  --ink: #1c232e;
+  --ink-soft: #5c6673;
+  --ink-faint: #8b939e;
+  --line: #e6e3dc;
+  --accent: #2c6e8a;
+  --accent-soft: #e8f2f6;
+  --accent-ink: #1d4d61;
+  --warm: #b9762f;
+  --danger: #a4443a;
+  --danger-soft: #fbeeec;
+  --radius: 10px;
+  --shadow: 0 1px 2px rgba(28, 35, 46, 0.05), 0 6px 16px rgba(28, 35, 46, 0.05);
+  --sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font: 15px/1.5 var(--sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+/* --- shell ------------------------------------------------------------- */
+
+.shell {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  height: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+
+.wordmark {
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  margin-right: 4px;
+}
+
+.wordmark span {
+  color: var(--accent);
+}
+
+.project-name {
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 8px;
+  padding: 5px 9px;
+  font-weight: 550;
+  min-width: 12ch;
+  max-width: 28ch;
+}
+
+.project-name:hover {
+  border-color: var(--line);
+}
+
+.project-name:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--card);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.saved-note {
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  padding: 0 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+}
+
+.tab {
+  border: none;
+  background: none;
+  padding: 11px 14px;
+  color: var(--ink-soft);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--ink);
+}
+
+.tab[aria-selected='true'] {
+  color: var(--accent-ink);
+  border-bottom-color: var(--accent);
+  font-weight: 550;
+}
+
+.body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 250px 1fr 320px;
+  gap: 16px;
+  padding: 16px 20px;
+  overflow: hidden;
+}
+
+.body.wide {
+  grid-template-columns: 1fr;
+}
+
+/* min-width matters as much as min-height: without it a level wider than the
+   window stretches its grid column and pushes the inspector off screen. */
+.body > * {
+  min-width: 0;
+}
+
+.column {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+}
+
+/* --- panels ------------------------------------------------------------ */
+
+.panel {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+.panel > h2 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-weight: 650;
+}
+
+.panel.plain {
+  box-shadow: none;
+  border: 1px solid var(--line);
+}
+
+.note {
+  color: var(--ink-soft);
+  font-size: 13px;
+  margin: 6px 0 0;
+}
+
+.problem {
+  margin: 0 20px 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 14px;
+  white-space: pre-line;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+/* --- controls ---------------------------------------------------------- */
+
+.button {
+  border: 1px solid var(--line);
+  background: var(--card);
+  /* Explicit: inside the play overlay this would otherwise inherit white text
+     on a white button. */
+  color: var(--ink);
+  border-radius: 8px;
+  padding: 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--ink-faint);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 550;
+}
+
+.button.primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.button.quiet {
+  border-color: transparent;
+  color: var(--ink-soft);
+  padding: 5px 8px;
+}
+
+.button.quiet:hover:not(:disabled) {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.button.danger {
+  color: var(--danger);
+}
+
+.button.small {
+  padding: 3px 8px;
+  font-size: 13px;
+}
+
+.field {
+  display: block;
+  margin-bottom: 12px;
+}
+
+.field > .label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+
+.field input[type='text'],
+.field input[type='number'],
+.field select,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: var(--card);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.field.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field.inline > .label {
+  margin: 0;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.hint {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink-faint);
+  font-size: 10px;
+  cursor: help;
+}
+
+.hint > span {
+  display: none;
+  position: absolute;
+  left: 50%;
+  bottom: 130%;
+  transform: translateX(-50%);
+  width: 230px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 12.5px;
+  line-height: 1.45;
+  z-index: 20;
+  box-shadow: var(--shadow);
+}
+
+.hint:hover > span,
+.hint:focus > span {
+  display: block;
+}
+
+.segmented {
+  display: inline-flex;
+  background: var(--paper);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.segmented button {
+  border: none;
+  background: none;
+  border-radius: 6px;
+  padding: 5px 11px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(28, 35, 46, 0.08);
+  font-weight: 550;
+}
+
+/* --- lists ------------------------------------------------------------- */
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.list button.row {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  padding: 7px 9px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: inherit;
+}
+
+.list button.row:hover {
+  background: var(--paper);
+}
+
+.list button.row[aria-current='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-weight: 550;
+}
+
+.row .muted {
+  color: var(--ink-faint);
+  font-size: 12.5px;
+  margin-left: auto;
+}
+
+.chip {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+/* --- the level canvas -------------------------------------------------- */
+
+.stage {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.stage-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.canvas-frame {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: grid;
+  align-content: start;
+  /* Centred while the level fits, left aligned once it is wider than the panel,
+     so the start of a level is never scrolled out of view. */
+  justify-content: safe center;
+}
+
+.canvas-frame canvas {
+  display: block;
+  image-rendering: pixelated;
+  cursor: crosshair;
+  background: #cfd8dd;
+}
+
+.canvas-frame.selecting canvas {
+  cursor: default;
+}
+
+.palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.palette button {
+  border: 2px solid var(--line);
+  border-radius: 8px;
+  background: none;
+  padding: 2px 3px 3px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  color: var(--ink-faint);
+}
+
+.palette button[aria-pressed='true'] {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.palette .swatch {
+  width: 36px;
+  height: 36px;
+  border-radius: 5px;
+  background-color: var(--paper);
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+.palette .caption {
+  font-size: 10px;
+  line-height: 1.1;
+  max-width: 42px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- rules ------------------------------------------------------------- */
+
+.rule {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  background: var(--card);
+  margin-bottom: 10px;
+}
+
+.rule.editing {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.rule-sentence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.rule-sentence .word {
+  color: var(--accent);
+  font-weight: 650;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.rule-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.rule-head strong {
+  font-weight: 600;
+}
+
+.rule-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+}
+
+.clause {
+  border-left: 3px solid var(--accent-soft);
+  padding: 2px 0 2px 12px;
+  margin: 10px 0;
+}
+
+.clause-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.clause-head .word {
+  color: var(--accent);
+  font-weight: 650;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* --- play mode --------------------------------------------------------- */
+
+.play {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 22, 28, 0.82);
+  display: grid;
+  place-items: center;
+  z-index: 50;
+}
+
+.play-inner {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: center;
+}
+
+.play canvas {
+  background: #000;
+  border-radius: 8px;
+  image-rendering: pixelated;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.play-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: #fff;
+}
+
+.play-bar .keys {
+  color: #cbd3da;
+  font-size: 13px;
+}
+
+.assets {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.asset {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px;
+  background: var(--card);
+}
+
+.asset .preview {
+  height: 84px;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.asset .preview img {
+  max-width: 100%;
+  max-height: 100%;
+  image-rendering: pixelated;
+}
+
+code {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  background: var(--paper);
+  padding: 1px 5px;
+  border-radius: 5px;
+}

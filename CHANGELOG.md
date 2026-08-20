@@ -43,6 +43,17 @@ project file changes, and every change comes with a migration.
   nothing to fetch, running the same runtime as the editor will.
 - `examples/first-game`: Coin Run, two levels written by hand in JSON, with a
   test that plays it headlessly and a test that no coin is placed out of reach.
+- `@pinforge/editor`, the visual editor: a level list, the things in a level and
+  the kinds of thing that exist, a tile painter with a palette, a contextual
+  inspector, an event rule editor built from cascading dropdowns, an asset
+  browser, project settings, and play mode running the same runtime as the
+  export.
+  - Undo and redo across every mutation, through a command layer written before
+    the interface. A brush drag is one undo step, and a change that would break
+    the game is refused with the reason rather than applied.
+  - Autosave to the browser, plus explicit save and load of the game file.
+  - A rule's form is generated from the Zod schema, so the vocabulary can grow
+    without the editor changing.
 - `@pinforge/mcp`, a Model Context Protocol server with eighteen tools covering
   opening and creating projects, reading levels, creating and changing entities,
   painting tile regions, adding and removing rules, validating and exporting.
@@ -64,6 +75,9 @@ project file changes, and every change comes with a migration.
 
 ### Fixed
 
+- The placeholder spike tile bled two pixels into the neighbouring tile, so a
+  sliver of a spike appeared under every wooden platform in both the editor and
+  the exported game.
 - A rule is skipped when an entity it is about was already removed by an earlier
   rule in the same step. Squashing an enemy no longer also costs a life, because
   the squash rule's bounce can no longer change what the "walked into an enemy"

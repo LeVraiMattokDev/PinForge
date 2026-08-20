@@ -218,6 +218,43 @@ first rule's bounce would change what "is falling" answers for the second, so
 squashing an enemy would also hurt you. There is a test named after exactly
 that.
 
+## The editor
+
+Every change to a project goes through a command: a pure function from one
+project to the next, with a label in the user's own words. Undo is then simply
+the previous project. Because the updates share everything they do not change,
+keeping two hundred of them costs almost nothing, and there is no separate apply
+and revert pair to get out of step.
+
+Commands existed before any interface did, deliberately. Retrofitting undo is a
+rewrite, and the first mutation written without it is the moment that becomes
+inevitable.
+
+Two details carry more weight than they look:
+
+- A command carries a merge key. Consecutive commands with the same key collapse
+  into one step, so dragging a brush across twenty tiles is one undo, not twenty.
+- Every command's result is validated before it is accepted. A change that would
+  leave the project broken is refused with the reason, and nothing moves. The
+  editor therefore cannot produce a project the runtime would refuse, which is
+  the same guarantee the MCP server gives.
+
+Play mode runs `@pinforge/core` on the project in memory, so what is played is
+what ships. It starts on the level being edited rather than the one the game
+starts on, because that is the level being worked on.
+
+The design time view of a level is not the runtime. It draws the level as it is
+written rather than as it is played: no parallax offset, a grid, and a labelled
+box wherever a picture is missing so everything stays visible and selectable.
+That is a drawing of the data, not a second simulation, and it is the only place
+in the project where anything a player would recognise is drawn outside core.
+
+A rule's form is worked out from the Zod schema. The editor holds the words a
+person reads and which list a field's options come from; the fields themselves,
+their types and their allowed values come from the schema. An action added to the
+format gets a working form with no editor change, and a test compares the two in
+both directions.
+
 ## Testing
 
 Runtime simulation tests are deterministic: a starting state, a scripted input
