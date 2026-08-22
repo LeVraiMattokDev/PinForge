@@ -28,6 +28,7 @@ export interface StepSignals {
   collisionsStarted: [Entity, Entity][];
   collisionsEnded: [Entity, Entity][];
   tileTouches: [Entity, string][];
+  tileBlocks: [Entity, string][];
   landed: Entity[];
   jumped: Entity[];
   leftScene: [Entity, SceneEdge][];
@@ -170,6 +171,11 @@ function* firings(
         if (tag === trigger.tag && matches(trigger.subject, entity, {})) yield { self: entity };
       }
       return;
+    case 'blocked-by-tile':
+      for (const [entity, tag] of signals.tileBlocks) {
+        if (tag === trigger.tag && matches(trigger.subject, entity, {})) yield { self: entity };
+      }
+      return;
     case 'lands':
       for (const entity of signals.landed) {
         if (matches(trigger.subject, entity, {})) yield { self: entity };
@@ -285,6 +291,25 @@ function holds(host: RuntimeHost, condition: Condition, context: RuleContext): b
         ? distance <= condition.pixels
         : distance >= condition.pixels;
     }
+    case 'position-compare': {
+      const subject = resolve(world, condition.subject, context)[0];
+      const other = resolve(world, condition.of, context)[0];
+      if (!subject || !other) return false;
+      // Middles, not corners, so a wide thing and a narrow thing agree about
+      // which one is further left.
+      const acrossGap = subject.x + subject.width / 2 - (other.x + other.width / 2);
+      const downGap = subject.y + subject.height / 2 - (other.y + other.height / 2);
+      switch (condition.side) {
+        case 'left':
+          return acrossGap < 0;
+        case 'right':
+          return acrossGap > 0;
+        case 'above':
+          return downGap < 0;
+        case 'below':
+          return downGap > 0;
+      }
+    }
     case 'chance':
       return host.random.next() * 100 < condition.percent;
     case 'current-scene-is':
@@ -364,7 +389,11 @@ function perform(host: RuntimeHost, action: Action, context: RuleContext): void 
       // instead is a wrong answer given quietly: nothing is the right one.
       const origin = originOf(world, action.relativeTo, context);
       if (!origin) return;
-      world.spawn(prototype, origin.x + action.x, origin.y + action.y);
+      const scatterX =
+        action.spreadX > 0 ? host.random.between(-action.spreadX, action.spreadX) : 0;
+      const scatterY =
+        action.spreadY > 0 ? host.random.between(-action.spreadY, action.spreadY) : 0;
+      world.spawn(prototype, origin.x + action.x + scatterX, origin.y + action.y + scatterY);
       return;
     }
     case 'move':
@@ -410,6 +439,12 @@ function perform(host: RuntimeHost, action: Action, context: RuleContext): void 
       return;
     case 'copy-variable': {
       const value = host.variable(action.from);
+      if (value !== undefined) host.setVariable(action.into, value);
+      return;
+    }
+    case 'copy-property': {
+      const holder = resolve(world, action.from, context)[0];
+      const value = holder?.properties.get(action.property);
       if (value !== undefined) host.setVariable(action.into, value);
       return;
     }

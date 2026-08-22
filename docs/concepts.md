@@ -18,7 +18,8 @@ from a palette, like a stamp tool, onto a grid.
 
 A tile does not know how to behave. It carries **tags**, and the tags decide:
 
-- `solid` — you cannot walk through it.
+- `solid` — you cannot walk through it. Only tiles stop things this way: two
+  entities never push each other apart, so a wall or a closed door is a tile.
 - `one-way` — you can jump up through it and stand on top. A wooden platform.
 - `hazard` — touching it is dangerous. What "dangerous" means is up to your rules.
 

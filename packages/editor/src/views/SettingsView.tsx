@@ -146,6 +146,7 @@ export function SettingsView() {
                   name: 'New value',
                   type: 'number',
                   initial: 0,
+                  countsDown: false,
                 }),
               )
             }
@@ -184,6 +185,16 @@ export function SettingsView() {
                 onChange={(raw) => store.apply(edit.updateVariable(withInitial(variable, raw)))}
               />
             </Field>
+            {variable.type === 'number' ? (
+              <Checkbox
+                label="Counts itself down to zero"
+                checked={variable.countsDown}
+                hint="Setting it to 3 then means: for the next three seconds. Good for a clock on the level."
+                onChange={(countsDown) =>
+                  store.apply(edit.updateVariable({ ...variable, countsDown }))
+                }
+              />
+            ) : null}
             <div className="note">
               <code>{variable.id}</code>
             </div>
@@ -205,7 +216,12 @@ function retyped(variable: VariableDefinition, type: string): VariableDefinition
   const base = { id: variable.id, ...(variable.name === undefined ? {} : { name: variable.name }) };
   if (type === 'boolean') return { ...base, type: 'boolean', initial: false };
   if (type === 'text') return { ...base, type: 'text', initial: '' };
-  return { ...base, type: 'number', initial: 0 };
+  return {
+    ...base,
+    type: 'number',
+    initial: 0,
+    countsDown: variable.type === 'number' ? variable.countsDown : false,
+  };
 }
 
 function withInitial(variable: VariableDefinition, raw: string): VariableDefinition {

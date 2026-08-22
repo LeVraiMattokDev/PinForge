@@ -128,6 +128,7 @@ export const TRIGGER_TEMPLATES: readonly Template[] = [
   template('action-pressed', 'when {action:id} is pressed'),
   template('action-released', 'when {action:id} is released'),
   template('touches-tile', 'when {subject:ref} touches a {tag:id} tile'),
+  template('blocked-by-tile', 'when {subject:ref} is stopped by a {tag:id} tile'),
   template('collides', 'when {subject:ref} touches {with:ref}'),
   template('collision-ends', 'when {subject:ref} stops touching {with:ref}'),
   template('variable-changes', 'when {variable:id} changes'),
@@ -155,6 +156,10 @@ export const CONDITION_TEMPLATES: readonly Template[] = [
   template('distance-is', '{from:ref} is at least {pixels:number} pixels from {to:ref}', {
     set: { operator: 'at-least' },
   }),
+  template('position-compare', '{subject:ref} is left of {of:ref}', { set: { side: 'left' } }),
+  template('position-compare', '{subject:ref} is right of {of:ref}', { set: { side: 'right' } }),
+  template('position-compare', '{subject:ref} is above {of:ref}', { set: { side: 'above' } }),
+  template('position-compare', '{subject:ref} is below {of:ref}', { set: { side: 'below' } }),
   template('chance', 'chance of {percent:number} in 100'),
   template('current-scene-is', 'the level is {scene:id}'),
   template('property-is', '{property:id} of {target:ref} {operator:cmp} {value:value}'),
@@ -166,9 +171,12 @@ export const CONDITION_TEMPLATES: readonly Template[] = [
 
 export const ACTION_TEMPLATES: readonly Template[] = [
   template('destroy', 'remove {target:ref}'),
-  template('spawn', 'create {entity:id} [ at {x:number} {y:number} ] [ near {relativeTo:ref} ]', {
-    omit: { x: 0, y: 0 },
-  }),
+  template(
+    'spawn',
+    'create {entity:id} [ at {x:number} {y:number} ] [ near {relativeTo:ref} ]' +
+      ' [ scattered {spreadX:number} across {spreadY:number} down ]',
+    { omit: { x: 0, y: 0, spreadX: 0, spreadY: 0 } },
+  ),
   template('teleport', 'teleport {target:ref} to {x:number} {y:number} [ near {relativeTo:ref} ]'),
   template(
     'move',
@@ -198,6 +206,7 @@ export const ACTION_TEMPLATES: readonly Template[] = [
     set: { operator: 'set' },
   }),
   template('copy-variable', 'copy {from:id} into {into:id}'),
+  template('copy-property', 'copy {property:id} of {from:ref} into {into:id}'),
   template('set-property', 'set {property:id} of {target:ref} to {value:value}'),
   template('change-property', 'add {value:number} to {property:id} of {target:ref}', {
     set: { operator: 'add' },

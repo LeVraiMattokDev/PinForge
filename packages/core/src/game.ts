@@ -50,6 +50,7 @@ export class Game implements RuntimeHost {
    */
   private readonly disabledGlobalRules = new Set<string>();
   private readonly globalRuleIds: Set<string>;
+  private readonly countingDown: readonly string[];
   private frozen = false;
   private pending: PendingActions[] = [];
   private accumulator = 0;
@@ -73,6 +74,9 @@ export class Game implements RuntimeHost {
     this.prototypes = new Map(project.entities.map((entity) => [entity.id, entity]));
     this.scenes = new Map(project.scenes.map((scene) => [scene.id, scene]));
     this.globalRuleIds = new Set(project.globalEvents.map((rule) => rule.id));
+    this.countingDown = project.variables
+      .filter((one) => one.type === 'number' && one.countsDown)
+      .map((one) => one.id);
     for (const variable of project.variables) this.variables.set(variable.id, variable.initial);
 
     const first = this.scenes.get(project.settings.startScene) ?? project.scenes[0];
@@ -120,6 +124,7 @@ export class Game implements RuntimeHost {
     advancePending(this, STEP_SECONDS);
 
     if (!this.changingScene && !paused) {
+      this.tickCountdowns(STEP_SECONDS);
       for (const entity of world.entities) {
         if (!entity.destroyed) stepMovement(entity, world.map, this.input, STEP_SECONDS);
       }
@@ -295,6 +300,12 @@ export class Game implements RuntimeHost {
       for (const tag of tagsUnder(entity, world)) tileTouches.push([entity, tag]);
     }
 
+    const tileBlocks: [Entity, string][] = [];
+    for (const entity of world.entities) {
+      if (entity.destroyed) continue;
+      for (const tag of entity.blockedTags) tileBlocks.push([entity, tag]);
+    }
+
     // Leaving the level fires once, on the step the entity crosses out, and
     // again only if it comes back in and leaves again. Before this it fired on
     // every step the entity spent outside, so the ordinary rule "when the
@@ -339,6 +350,7 @@ export class Game implements RuntimeHost {
       collisionsStarted,
       collisionsEnded,
       tileTouches,
+      tileBlocks,
       landed: world.entities.filter((entity) => entity.landed && !entity.destroyed),
       jumped: world.entities.filter((entity) => entity.jumped && !entity.destroyed),
       leftScene,
@@ -347,6 +359,25 @@ export class Game implements RuntimeHost {
       destroyed: this.destroyedLastStep,
       variablesChanged: this.variablesChangedLastStep,
     };
+  }
+
+  /**
+   * Runs every countdown down towards zero. This is the engine's own
+   * bookkeeping rather than something writing to a variable, so it does not
+   * set off "when a variable changes" sixty times a second.
+   */
+  private tickCountdowns(seconds: number): void {
+    for (const name of this.countingDown) {
+      const left = Number(this.variables.get(name) ?? 0);
+      if (left > 0) this.variables.set(name, Math.max(0, left - seconds));
+    }
+    for (const entity of this.world.entities) {
+      if (entity.destroyed) continue;
+      for (const name of entity.countdowns) {
+        const left = Number(entity.properties.get(name) ?? 0);
+        if (left > 0) entity.properties.set(name, Math.max(0, left - seconds));
+      }
+    }
   }
 
   private snapCamera(): void {

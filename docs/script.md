@@ -118,6 +118,14 @@ Fires while an entity overlaps a tile carrying the given tag.
 when <subject> touches a <tag> tile
 ```
 
+### When something is stopped by a kind of tile
+
+Fires while an entity is pressed against a tile carrying that tag. A solid tile can never be touched, because being solid is what keeps anything out of its cell, so this is how a locked door notices someone at it.
+
+```
+when <subject> is stopped by a <tag> tile
+```
+
 ### When two things touch
 
 Fires the moment two entities begin to overlap.
@@ -243,6 +251,17 @@ if <from> is within <pixels> pixels of <to>
 if <from> is at least <pixels> pixels from <to>
 ```
 
+### Is on one side of
+
+True while one entity is to the left, right, above or below another. Paired with setting a speed, this is how something moves towards the player.
+
+```
+if <subject> is left of <of>
+if <subject> is right of <of>
+if <subject> is above <of>
+if <subject> is below <of>
+```
+
 ### By chance
 
 True a percentage of the time.
@@ -297,10 +316,10 @@ then remove <target>
 
 ### Create
 
-Adds a new copy of an entity at a position.
+Adds a new copy of an entity at a position, optionally scattered a little either way so a wave of them does not arrive in a line.
 
 ```
-then create <entity> [at <x> <y>] [near <relativeTo>]
+then create <entity> [at <x> <y>] [near <relativeTo>] [scattered <spreadX> across <spreadY> down]
 ```
 
 ### Move instantly to
@@ -354,6 +373,14 @@ Puts what one variable holds into another one, for remembering a best score.
 
 ```
 then copy <from> into <into>
+```
+
+### Copy a property into a variable
+
+Puts one entity's property into a variable, which is how a text entity can show a boss's health.
+
+```
+then copy <property> of <from> into <into>
 ```
 
 ### Set a property to

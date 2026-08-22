@@ -13,6 +13,12 @@ export function boxesOverlap(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
+/** A tile that stopped something, so a rule can be about the kind of tile it was. */
+export interface BlockedCell {
+  column: number;
+  row: number;
+}
+
 /**
  * Collision is resolved as two separate passes, X first and then Y, and that
  * ordering is load bearing.
@@ -28,7 +34,13 @@ export function boxesOverlap(a: Box, b: Box): boolean {
  * Both passes advance in sub-steps of at most one tile so that nothing can
  * tunnel through a wall at high speed.
  */
-export function moveOnX(body: Box, dx: number, map: Tilemap, collideWithTiles: boolean): boolean {
+export function moveOnX(
+  body: Box,
+  dx: number,
+  map: Tilemap,
+  collideWithTiles: boolean,
+  blocked?: BlockedCell[],
+): boolean {
   if (dx === 0) return false;
   if (!collideWithTiles) {
     body.x += dx;
@@ -53,6 +65,7 @@ export function moveOnX(body: Box, dx: number, map: Tilemap, collideWithTiles: b
     for (let row = top; row <= bottom; row += 1) {
       if (!map.isSolid(column, row)) continue;
       body.x = movingRight ? column * map.tileSize - body.width : (column + 1) * map.tileSize;
+      blocked?.push({ column, row });
       return true;
     }
   }
@@ -69,6 +82,7 @@ export function moveOnY(
   dy: number,
   map: Tilemap,
   collideWithTiles: boolean,
+  blocked?: BlockedCell[],
 ): VerticalHit {
   const hit: VerticalHit = { below: false, above: false };
   if (dy === 0) return hit;
@@ -96,11 +110,11 @@ export function moveOnY(
       : Math.floor(body.y / map.tileSize);
 
     for (let column = left; column <= right; column += 1) {
-      const blocked = movingDown
+      const stopped = movingDown
         ? map.isSolid(column, row) ||
           (map.isOneWay(column, row) && bottomBefore <= row * map.tileSize + EPSILON)
         : map.isSolid(column, row);
-      if (!blocked) continue;
+      if (!stopped) continue;
       if (movingDown) {
         body.y = row * map.tileSize - body.height;
         hit.below = true;
@@ -108,6 +122,7 @@ export function moveOnY(
         body.y = (row + 1) * map.tileSize;
         hit.above = true;
       }
+      blocked?.push({ column, row });
       return hit;
     }
   }

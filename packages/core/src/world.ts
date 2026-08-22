@@ -36,6 +36,10 @@ export interface Entity {
   destroyed: boolean;
   fixedToCamera: boolean;
   properties: Map<string, Value>;
+  /** Properties that count themselves down to zero, named once at birth. */
+  countdowns: readonly string[];
+  /** Kinds of tile that stopped it this step, so a rule can be about a locked door. */
+  blockedTags: string[];
   sprite: SpriteState | undefined;
   collider: ColliderComponent | undefined;
   movement: MovementComponent | undefined;
@@ -161,6 +165,10 @@ export function createEntity(prototype: EntityPrototype, instance: EntityInstanc
     destroyed: false,
     fixedToCamera: instance.fixedToCamera,
     properties,
+    countdowns: prototype.properties
+      .filter((one) => one.type === 'number' && one.countsDown)
+      .map((one) => one.id),
+    blockedTags: [],
     sprite: sprite
       ? { component: sprite, animation: sprite.defaultAnimation, elapsed: 0, frame: 0 }
       : undefined,
@@ -172,14 +180,21 @@ export function createEntity(prototype: EntityPrototype, instance: EntityInstanc
     coyoteLeft: 0,
     jumpBufferLeft: 0,
     airJumpsLeft: 0,
-    patrolDirection:
-      components.movement?.mode === 'platform' && components.movement.patrol?.direction === 'right'
-        ? 1
-        : -1,
+    patrolDirection: startingPatrolDirection(components.movement),
     jumped: false,
     landed: false,
     jumpCut: false,
   };
+}
+
+/**
+ * Which way a patrolling entity sets off. Right and down are the positive
+ * directions on their axes, and anything not patrolling starts leftwards, which
+ * is what most simple enemies want.
+ */
+function startingPatrolDirection(movement: MovementComponent | undefined): 1 | -1 {
+  const direction = movement?.patrol?.direction;
+  return direction === 'right' || direction === 'down' ? 1 : -1;
 }
 
 /**

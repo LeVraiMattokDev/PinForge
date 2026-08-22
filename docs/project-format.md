@@ -154,9 +154,16 @@ purpose.
 and a speed. `flipToFaceMovement` mirrors the art when moving left so only one
 direction has to be drawn.
 
-**`collider`** decides how it touches things. `solid` is pushed out of what it
-hits, `trigger` passes through and only reports overlaps to rules, `none` never
-collides. `collidesWithTiles` turns tile collision on or off separately.
+**`collider`** decides how it touches things. `solid` is pushed back out of solid
+tiles, `trigger` passes through tiles and only reports overlaps to rules, `none`
+never collides at all. `collidesWithTiles` turns tile collision on or off
+separately.
+
+Entities never push each other apart, whatever their collider says. Two of them
+are always free to overlap, and that overlap is exactly what a rule about two
+things touching is for. Anything that has to physically block the player — a
+wall, a closed door, a crate you cannot walk through — belongs in a tile layer,
+where `set-tile` can open it again later.
 
 **`movement`** is the only real difference between 2D genres, and the reason
 there is one runtime rather than one per genre. It has two modes.
@@ -471,7 +478,16 @@ what the code accepts.
       "tags": ["player"],
       // Custom per entity state, editable in the inspector, readable by rules.
       "properties": [
-        { "id": "invulnerable-for", "name": "Invulnerable for", "type": "number", "initial": 0 }
+        // countsDown makes the engine run it down to zero by itself, so setting
+        // it to 1 means "for the next second". This is how being hurt gives a
+        // moment of grace before it can happen again.
+        {
+          "id": "invulnerable-for",
+          "name": "Invulnerable for",
+          "type": "number",
+          "initial": 0,
+          "countsDown": true
+        }
       ],
       // A small, fixed set of components. Each may appear at most once.
       // Available: sprite, collider, movement, text.
@@ -834,10 +850,21 @@ what the code accepts.
           "name": "Lose a life on spikes",
           "enabled": true,
           "when": { "type": "touches-tile", "subject": "player", "tag": "hazard" },
-          "if": [],
+          // Touching a tile is reported on every step of the contact, so without
+          // the grace below, standing on a spike would spend every life in well
+          // under a second. Slimes restart the level instead; spikes chip away.
+          "if": [
+            {
+              "type": "property-is",
+              "target": "$self",
+              "property": "invulnerable-for",
+              "operator": "at-most",
+              "value": 0
+            }
+          ],
           "then": [
             { "type": "change-variable", "variable": "lives", "operator": "subtract", "value": 1 },
-            { "type": "restart-scene" }
+            { "type": "set-property", "target": "$self", "property": "invulnerable-for", "value": 1 }
           ]
         },
         {

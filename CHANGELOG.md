@@ -104,12 +104,47 @@ tag:enemy` reads as one enemy dying and removes every one of them, because
   the check passes when any one matches and the action runs on all of them.
 - Every trigger, condition and action the engine advertises is now exercised by
   a test, so a vocabulary entry cannot ship dead again.
+- A number that counts itself down to zero, on a global variable or on an
+  entity's own property. Setting it to 1 then means "for the next second",
+  which is a moment of grace after being hurt, a cooldown between shots, or a
+  clock on the level. The platformer playtester called this arguably the core
+  feel of the genre and paid for it with four always-on rules and three
+  hand-written properties; the format reference had been naming a property
+  `invulnerable-for` all along without a single rule wired to it, and now uses
+  it for real.
+- Copying an entity's property into a variable, which is the only way a text
+  entity can put a boss's health on screen.
+- Comparing where two things are, in four fixed phrases: `if $self is left of
+player`, and the same for right, above and below. Paired with setting a
+  speed, that is an enemy that comes after the player — the arcade playtester
+  had given up on aiming entirely, because nothing in the whole vocabulary
+  could read a coordinate.
+- "Walks back and forth by itself" for free movement, not only for platform
+  movement, along whichever axis its direction implies. Faking it cost the
+  top-down playtester four invisible entities and six rules for two guards.
+- Creating something scattered a little either way, so a wave of enemies does
+  not arrive in a line. Faking that cost sixteen near-identical rules, one per
+  lane.
+- "When something is stopped by a kind of tile". A solid tile can never be
+  touched, because being solid is exactly what keeps anything out of its cell,
+  so a locked door had no way to notice the player standing at it. Proven by a
+  playtester leaning on their door for six hundred steps and getting nothing,
+  then spending two invisible sensor entities per door on it.
 
 ### Changed
 
 - Every command function in `@pinforge/cli` returns what happened instead of
   printing it, and only the command line prints. The MCP server runs with its
   protocol on stdout, where a stray line of output breaks the connection.
+- `collider` said `solid` "is pushed out of what it hits". Only tiles ever push
+  anything, and a playtester proved it by walking a player straight through a
+  wall-sized solid entity, which they reported as a blocker. Implementing it
+  would turn every enemy in every existing game into a wall, because solid is
+  the default collider, so the promise is what was corrected: entities never
+  push each other apart, that overlap is what a rule about two things touching
+  is for, and anything that must physically block belongs in a tile layer.
+- Patrolling is no longer hidden inside the inspector's collapsed "how it feels"
+  section, where it does not belong, and now names which way it sets off.
 
 ### Fixed
 

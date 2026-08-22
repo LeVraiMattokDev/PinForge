@@ -23,6 +23,7 @@ export interface WorldOptions {
   prototypes?: ProjectInput['entities'];
   events?: NonNullable<ProjectInput['scenes'][number]['events']>;
   globalEvents?: ProjectInput['globalEvents'];
+  tilesets?: ProjectInput['tilesets'];
   variables?: ProjectInput['variables'];
   camera?: ProjectInput['scenes'][number]['camera'];
   scenes?: ProjectInput['scenes'];
@@ -35,7 +36,7 @@ export function makeGame(options: WorldOptions = {}): Game {
     meta: { name: 'Simulation test' },
     settings: { startScene: 'level-1', viewport: { width: 160, height: 96 } },
     variables: options.variables ?? [{ id: 'score', type: 'number', initial: 0 }],
-    tilesets: [
+    tilesets: options.tilesets ?? [
       {
         id: 'ground',
         image: 'tiles',

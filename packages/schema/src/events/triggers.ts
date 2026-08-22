@@ -21,6 +21,7 @@ export const Trigger = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('collides'), subject: EntityRef, with: EntityRef }),
   z.strictObject({ type: z.literal('collision-ends'), subject: EntityRef, with: EntityRef }),
   z.strictObject({ type: z.literal('touches-tile'), subject: EntityRef, tag: TileTag }),
+  z.strictObject({ type: z.literal('blocked-by-tile'), subject: EntityRef, tag: TileTag }),
   z.strictObject({ type: z.literal('variable-changes'), variable: Id }),
   z.strictObject({ type: z.literal('entity-spawned'), subject: EntityRef }),
   z.strictObject({ type: z.literal('entity-destroyed'), subject: EntityRef }),

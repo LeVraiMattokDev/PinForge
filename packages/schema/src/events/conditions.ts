@@ -55,6 +55,13 @@ export const Condition = z.discriminatedUnion('type', [
     negate,
   }),
   z.strictObject({
+    type: z.literal('position-compare'),
+    subject: EntityRef,
+    side: z.enum(['left', 'right', 'above', 'below']),
+    of: EntityRef,
+    negate,
+  }),
+  z.strictObject({
     type: z.literal('chance'),
     percent: z.number().min(0).max(100),
     negate,

@@ -283,6 +283,35 @@ function checkPrototypes(project: Project, index: ProjectIndex, issues: Issues):
       }
     }
 
+    const movement = entity.components.movement;
+    const patrol = movement?.patrol;
+    if (movement && patrol) {
+      const alongY = patrol.direction === 'up' || patrol.direction === 'down';
+      if (movement.mode === 'platform' && alongY) {
+        issues.add(
+          `${path}/components/movement/patrol/direction`,
+          'wrong-patrol-direction',
+          `"${entity.id}" walks and jumps, so it cannot patrol ${patrol.direction}. Use left or right, or give it free movement.`,
+        );
+      }
+      if (movement.mode === 'free') {
+        if (movement.axes === 'horizontal' && alongY) {
+          issues.add(
+            `${path}/components/movement/patrol/direction`,
+            'wrong-patrol-direction',
+            `"${entity.id}" can only move across, so it cannot patrol ${patrol.direction}.`,
+          );
+        }
+        if (movement.axes === 'vertical' && !alongY) {
+          issues.add(
+            `${path}/components/movement/patrol/direction`,
+            'wrong-patrol-direction',
+            `"${entity.id}" can only move up and down, so it cannot patrol ${patrol.direction}.`,
+          );
+        }
+      }
+    }
+
     if (entity.components.text && sprite) {
       issues.add(
         `${path}/components`,
@@ -654,6 +683,7 @@ function checkTrigger(
       checkEntityRef(trigger.with, `${path}/with`, scope, index, issues, bare);
       break;
     case 'touches-tile':
+    case 'blocked-by-tile':
       checkEntityRef(trigger.subject, `${path}/subject`, scope, index, issues, bare);
       if (!index.tileTags.has(trigger.tag)) {
         issues.add(

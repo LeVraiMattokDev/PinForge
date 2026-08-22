@@ -31,13 +31,15 @@
       "id": "score",
       "name": "Score",
       "type": "number",
-      "initial": 0
+      "initial": 0,
+      "countsDown": false
     },
     {
       "id": "lives",
       "name": "Lives",
       "type": "number",
-      "initial": 3
+      "initial": 3,
+      "countsDown": false
     }
   ],
   "assets": [
@@ -128,7 +130,8 @@
           "id": "invulnerable-for",
           "name": "Invulnerable for",
           "type": "number",
-          "initial": 0
+          "initial": 0,
+          "countsDown": true
         }
       ],
       "components": {
@@ -662,7 +665,16 @@
             "subject": "player",
             "tag": "hazard"
           },
-          "if": [],
+          "if": [
+            {
+              "type": "property-is",
+              "target": "$self",
+              "property": "invulnerable-for",
+              "operator": "at-most",
+              "value": 0,
+              "negate": false
+            }
+          ],
           "then": [
             {
               "type": "change-variable",
@@ -671,7 +683,10 @@
               "value": 1
             },
             {
-              "type": "restart-scene"
+              "type": "set-property",
+              "target": "$self",
+              "property": "invulnerable-for",
+              "value": 1
             }
           ]
         },

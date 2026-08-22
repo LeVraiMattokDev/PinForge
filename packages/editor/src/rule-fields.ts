@@ -44,6 +44,8 @@ const WORDS: Record<string, { label: string; hint?: string; kind?: FieldKind }> 
   target: { label: 'Which thing', kind: 'entity' },
   from: { label: 'From', kind: 'entity' },
   to: { label: 'To', kind: 'entity' },
+  of: { label: 'Compared with', kind: 'entity' },
+  side: { label: 'On which side' },
   relativeTo: {
     label: 'Placed next to',
     kind: 'entity',
@@ -86,6 +88,8 @@ const WORDS: Record<string, { label: string; hint?: string; kind?: FieldKind }> 
     kind: 'property',
     hint: 'The name of a custom property on that entity, like hits-left.',
   },
+  spreadX: { label: 'Scattered across', hint: 'Up to this many pixels either side, at random.' },
+  spreadY: { label: 'Scattered down', hint: 'Up to this many pixels either way, at random.' },
   x: { label: 'Across', hint: 'Pixels from the left. Sixteen pixels is one tile.' },
   y: { label: 'Down', hint: 'Pixels from the top. Down is positive.' },
   negate: {
@@ -100,6 +104,7 @@ const BY_TYPE: Record<string, FieldKind> = {
   // "from" names an entity everywhere else, but a variable here.
   'copy-variable.from': 'variable',
   'touches-tile.tag': 'tile-tag',
+  'blocked-by-tile.tag': 'tile-tag',
   'move.x': 'number',
   'move.y': 'number',
 };

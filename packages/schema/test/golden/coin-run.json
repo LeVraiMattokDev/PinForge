@@ -124,7 +124,8 @@
           "id": "invulnerable-for",
           "name": "Invulnerable for",
           "type": "number",
-          "initial": 0
+          "initial": 0,
+          "countsDown": true
         }
       ],
       "components": {
@@ -621,7 +622,15 @@
             "subject": "player",
             "tag": "hazard"
           },
-          "if": [],
+          "if": [
+            {
+              "type": "property-is",
+              "target": "$self",
+              "property": "invulnerable-for",
+              "operator": "at-most",
+              "value": 0
+            }
+          ],
           "then": [
             {
               "type": "change-variable",
@@ -630,7 +639,10 @@
               "value": 1
             },
             {
-              "type": "restart-scene"
+              "type": "set-property",
+              "target": "$self",
+              "property": "invulnerable-for",
+              "value": 1
             }
           ]
         },

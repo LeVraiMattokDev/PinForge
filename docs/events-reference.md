@@ -111,6 +111,16 @@ Fires while an entity overlaps a tile carrying the given tag.
 {"type":"touches-tile","subject":"player","tag":"hazard"}
 ```
 
+### When something is stopped by a kind of tile
+
+`blocked-by-tile`
+
+Fires while an entity is pressed against a tile carrying that tag. A solid tile can never be touched, because being solid is what keeps anything out of its cell, so this is how a locked door notices someone at it.
+
+```json
+{"type":"blocked-by-tile","subject":"player","tag":"door"}
+```
+
 ### When a variable changes
 
 `variable-changes`
@@ -259,6 +269,16 @@ Compares the distance between two entities with a number of pixels.
 {"type":"distance-is","from":"$self","to":"player","operator":"at-most","pixels":64}
 ```
 
+### Is on one side of
+
+`position-compare`
+
+True while one entity is to the left, right, above or below another. Paired with setting a speed, this is how something moves towards the player.
+
+```json
+{"type":"position-compare","subject":"$self","side":"left","of":"player"}
+```
+
 ### By chance
 
 `chance`
@@ -321,10 +341,10 @@ Takes an entity out of the level.
 
 `spawn`
 
-Adds a new copy of an entity at a position.
+Adds a new copy of an entity at a position, optionally scattered a little either way so a wave of them does not arrive in a line.
 
 ```json
-{"type":"spawn","entity":"coin","x":0,"y":-12,"relativeTo":"$self"}
+{"type":"spawn","entity":"coin","x":0,"y":-12,"relativeTo":"$self","spreadX":0,"spreadY":0}
 ```
 
 ### Set the speed of
@@ -387,6 +407,16 @@ Puts what one variable holds into another one, for remembering a best score.
 
 ```json
 {"type":"copy-variable","from":"score","into":"high-score"}
+```
+
+### Copy a property into a variable
+
+`copy-property`
+
+Puts one entity's property into a variable, which is how a text entity can show a boss's health.
+
+```json
+{"type":"copy-property","from":"boss","property":"hits-left","into":"boss-health"}
 ```
 
 ### Set a property to

@@ -21,6 +21,13 @@ export const Action = z.discriminatedUnion('type', [
     relativeTo: EntityRef.optional().meta({
       description: 'Place it relative to this entity instead of the top left of the scene.',
     }),
+    spreadX: NonNegative.default(0).meta({
+      description:
+        'Put it up to this many pixels either side of that spot, picked at random. 0 means exactly there.',
+    }),
+    spreadY: NonNegative.default(0).meta({
+      description: 'The same, up and down.',
+    }),
   }),
   z.strictObject({
     type: z.literal('move'),
@@ -54,6 +61,12 @@ export const Action = z.discriminatedUnion('type', [
     type: z.literal('copy-variable'),
     from: Id,
     into: Id,
+  }),
+  z.strictObject({
+    type: z.literal('copy-property'),
+    from: EntityRef,
+    property: Id,
+    into: Id.meta({ description: 'The variable to put it in.' }),
   }),
   z.strictObject({
     type: z.literal('set-property'),

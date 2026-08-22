@@ -16,6 +16,14 @@ export const VariableDefinition = z.discriminatedUnion('type', [
     name: Label.optional(),
     type: z.literal('number'),
     initial: z.number().default(0),
+    /**
+     * Only numbers can do this, which is why it lives on this branch of the
+     * union and needs no check of its own.
+     */
+    countsDown: z.boolean().default(false).meta({
+      description:
+        'Counts itself down to zero as the game runs, so setting it to 1 means "for the next second". Used for hurt-and-flash time, a cooldown, or a level clock.',
+    }),
   }),
   z.strictObject({
     id: Id,

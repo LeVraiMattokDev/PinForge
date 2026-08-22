@@ -70,7 +70,7 @@ describe('the command layer', () => {
 
   it('undoes and redoes a whole sequence, in order', () => {
     const editor = store();
-    editor.apply(edit.addVariable({ id: 'lives', type: 'number', initial: 3 }));
+    editor.apply(edit.addVariable({ id: 'lives', type: 'number', initial: 3, countsDown: false }));
     editor.apply(edit.placeInstance('level-1', parsedInstance('coin-1')));
     editor.apply(edit.moveInstance('level-1', 'coin-1', 32, 16));
 

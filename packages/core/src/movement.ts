@@ -1,5 +1,5 @@
 import type { FreeMovementComponent, PlatformMovementComponent } from '@pinforge/schema';
-import { groundAhead, moveOnX, moveOnY, standingOn } from './collision.js';
+import { groundAhead, moveOnX, moveOnY, standingOn, type BlockedCell } from './collision.js';
 import type { InputState } from './input.js';
 import type { Tilemap } from './tilemap.js';
 import type { Entity } from './world.js';
@@ -15,21 +15,32 @@ export function stepMovement(
 ): void {
   entity.jumped = false;
   entity.landed = false;
+  entity.blockedTags.length = 0;
 
   const collide = entity.collider?.kind === 'solid' && entity.collider.collidesWithTiles;
   const movement = entity.movement;
+  const blocked: BlockedCell[] = [];
 
   if (!movement) {
     // No movement component, but a rule may still have given it a speed.
-    moveOnX(entity, entity.velocityX * seconds, map, collide);
-    moveOnY(entity, entity.velocityY * seconds, map, collide);
-    return;
+    moveOnX(entity, entity.velocityX * seconds, map, collide, blocked);
+    moveOnY(entity, entity.velocityY * seconds, map, collide, blocked);
+  } else if (movement.mode === 'free') {
+    stepFree(entity, movement, map, input, seconds, collide, blocked);
+  } else {
+    stepPlatform(entity, movement, map, input, seconds, collide, blocked);
   }
-  if (movement.mode === 'free') {
-    stepFree(entity, movement, map, input, seconds, collide);
-    return;
+
+  // What stopped it, named by the kinds of tile it ran into. A solid tile can
+  // never be *touched*, because being solid is exactly what keeps anything out
+  // of its cell, so a locked door needs this instead.
+  for (const cell of blocked) {
+    for (const tag of map.tags) {
+      if (map.hasTag(tag, cell.column, cell.row) && !entity.blockedTags.includes(tag)) {
+        entity.blockedTags.push(tag);
+      }
+    }
   }
-  stepPlatform(entity, movement, map, input, seconds, collide);
 }
 
 /**
@@ -45,6 +56,7 @@ function stepFree(
   input: InputState,
   seconds: number,
   collide: boolean,
+  blocked: BlockedCell[],
 ): void {
   const byPlayer = movement.controlledBy === 'player';
   const horizontal = movement.axes !== 'vertical';
@@ -68,13 +80,35 @@ function stepFree(
     if (wantedX !== 0) entity.facing = wantedX > 0 ? 1 : -1;
   }
 
+  // The same "walks back and forth by itself" platform movement has, for a game
+  // with no gravity: the direction picks the axis, and there are no ledges to
+  // fall off, so a wall is the only thing that turns it around.
+  const patrol = movement.patrol;
+  const alongY = patrol !== undefined && (patrol.direction === 'up' || patrol.direction === 'down');
+  if (patrol && !byPlayer) {
+    if (alongY) {
+      entity.velocityY = entity.patrolDirection * movement.maxSpeed;
+      entity.velocityX = 0;
+    } else {
+      entity.velocityX = entity.patrolDirection * movement.maxSpeed;
+      entity.velocityY = 0;
+      entity.facing = entity.patrolDirection > 0 ? 1 : -1;
+    }
+  }
+
   if (!horizontal) entity.velocityX = 0;
   if (!vertical) entity.velocityY = 0;
 
   // X to completion, then Y to completion, for the same reason as platforming.
-  if (moveOnX(entity, entity.velocityX * seconds, map, collide)) entity.velocityX = 0;
-  const hit = moveOnY(entity, entity.velocityY * seconds, map, collide);
+  const hitWall = moveOnX(entity, entity.velocityX * seconds, map, collide, blocked);
+  if (hitWall) entity.velocityX = 0;
+  const hit = moveOnY(entity, entity.velocityY * seconds, map, collide, blocked);
   if (hit.below || hit.above) entity.velocityY = 0;
+
+  if (patrol && !byPlayer && patrol.turnAtWalls) {
+    const stopped = alongY ? hit.below || hit.above : hitWall;
+    if (stopped) entity.patrolDirection = entity.patrolDirection > 0 ? -1 : 1;
+  }
 }
 
 function stepPlatform(
@@ -84,6 +118,7 @@ function stepPlatform(
   input: InputState,
   seconds: number,
   collide: boolean,
+  blocked: BlockedCell[],
 ): void {
   const byPlayer = movement.controlledBy === 'player';
 
@@ -143,11 +178,11 @@ function stepPlatform(
   );
 
   // X to completion, then Y to completion. See collision.ts for why.
-  const hitWall = moveOnX(entity, entity.velocityX * seconds, map, collide);
+  const hitWall = moveOnX(entity, entity.velocityX * seconds, map, collide, blocked);
   if (hitWall) entity.velocityX = 0;
 
   const wasOnGround = entity.onGround;
-  const vertical = moveOnY(entity, entity.velocityY * seconds, map, collide);
+  const vertical = moveOnY(entity, entity.velocityY * seconds, map, collide, blocked);
   if (vertical.below || vertical.above) entity.velocityY = 0;
 
   // Rising is never standing: without this, feet passing up through a one-way

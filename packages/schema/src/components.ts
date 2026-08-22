@@ -47,7 +47,7 @@ export const COLLIDER_KINDS = ['solid', 'trigger', 'none'] as const;
 export const ColliderComponent = z.strictObject({
   kind: z.enum(COLLIDER_KINDS).default('solid').meta({
     description:
-      'solid pushes out of what it hits, trigger passes through and only reports the overlap to rules, none never collides.',
+      'solid is pushed back out of solid tiles, trigger passes through tiles and only reports overlaps to rules, none never collides at all. Entities never push each other apart, whatever their collider says: two of them are always free to overlap, and that overlap is what a rule about two things touching is for. Something that must physically block the player belongs in a tile layer.',
   }),
   collidesWithTiles: z.boolean().default(true),
 });
@@ -67,9 +67,14 @@ const sharedMovementShape = {
 };
 
 export const PatrolConfig = z.strictObject({
-  direction: z.enum(['left', 'right']).default('left'),
+  direction: z.enum(['left', 'right', 'up', 'down']).default('left').meta({
+    description:
+      'Which way it sets off. up and down are for free movement, which has no gravity to fall with.',
+  }),
   turnAtWalls: z.boolean().default(true),
-  turnAtLedges: z.boolean().default(true),
+  turnAtLedges: z.boolean().default(true).meta({
+    description: 'Turn around rather than walk off an edge. Platform movement only.',
+  }),
 });
 
 const platformMovementShape = {
@@ -112,6 +117,10 @@ const platformMovementShape = {
 const freeMovementShape = {
   ...sharedMovementShape,
   axes: z.enum(['both', 'horizontal', 'vertical']).default('both'),
+  patrol: PatrolConfig.optional().meta({
+    description:
+      'Move back and forth along one axis without any event rules, turning at walls. The same idea platform movement has, for a game with no gravity.',
+  }),
 };
 
 /**

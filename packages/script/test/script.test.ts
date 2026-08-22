@@ -161,8 +161,17 @@ then say "The door said \\"no\\"." for 1 second
       x: 0,
       y: -12,
       relativeTo: '$self',
+      spreadX: 0,
+      spreadY: 0,
     });
-    expect(rules[0]?.then[1]).toEqual({ type: 'spawn', entity: 'coin', x: 0, y: 0 });
+    expect(rules[0]?.then[1]).toEqual({
+      type: 'spawn',
+      entity: 'coin',
+      x: 0,
+      y: 0,
+      spreadX: 0,
+      spreadY: 0,
+    });
   });
 
   it('tells a fixed number on the right from the name of another variable', () => {
@@ -316,7 +325,7 @@ describe('writing a script', () => {
         { type: 'play-sound', sound: 'sfx-coin', volume: 1 },
         { type: 'show-message', text: 'Hello', seconds: 2 },
         { type: 'shake-camera', strength: 4, seconds: 0.3 },
-        { type: 'spawn', entity: 'coin', x: 0, y: 0 },
+        { type: 'spawn', entity: 'coin', x: 0, y: 0, spreadX: 0, spreadY: 0 },
       ],
     } as unknown as EventRule;
 

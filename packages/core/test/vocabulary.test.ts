@@ -99,6 +99,16 @@ const SCENARIOS: Record<TriggerType, Scenario> = {
   },
   // Both of these need the player to have finished falling first.
   'touches-tile': { world: { rows: HAZARD }, drive: (game) => steps(game, 90) },
+  'blocked-by-tile': {
+    world: {
+      rows: ['..........', '..........', '..........', '.....#....', '.....#....', '##########'],
+    },
+    drive: (game) => {
+      steps(game, 60);
+      game.input.press('right');
+      steps(game, 120);
+    },
+  },
   'variable-changes': {
     alongside: [
       {
@@ -163,6 +173,8 @@ function subjectFor(type: TriggerType): Record<string, unknown> {
       return { subject: 'player', with: 'coin' };
     case 'touches-tile':
       return { subject: 'player', tag: 'hazard' };
+    case 'blocked-by-tile':
+      return { subject: 'player', tag: 'solid' };
     case 'entity-spawned':
     case 'entity-destroyed':
       return { subject: 'coin' };
@@ -233,6 +245,7 @@ describe('every action the engine advertises does something', () => {
     jump: (game) => player(game).velocityY < 0,
     'set-variable': (game) => game.variable('score') === 9,
     'copy-variable': (game) => game.variable('score') === 7,
+    'copy-property': (game) => game.variable('score') === 4,
     'change-variable': (game) => game.variable('score') === 1,
     'set-property': (game) => player(game).properties.get('hits-left') === 5,
     'change-property': (game) => player(game).properties.get('hits-left') === 3,
@@ -326,6 +339,11 @@ describe('every action the engine advertises does something', () => {
         example.from = 'best';
         example.into = 'score';
       }
+      if (type === 'copy-property') {
+        example.from = 'player';
+        example.property = 'hits-left';
+        example.into = 'score';
+      }
       if (type === 'set-property') example.value = 5;
       if (type === 'go-to-scene') example.scene = 'level-2';
       if (type === 'set-tile') {
@@ -403,6 +421,11 @@ describe('every condition the engine advertises can hold and can refuse', () => 
     },
     'variable-compare': {
       condition: { type: 'variable-compare', left: 'score', operator: 'equals', right: 'ticks' },
+      scenario: { world: { entities: ON_FLOOR } },
+    },
+    'position-compare': {
+      // The coin sits at x = 40, the player at x = 32, so the player is left of it.
+      condition: { type: 'position-compare', subject: 'player', side: 'left', of: 'coin' },
       scenario: { world: { entities: ON_FLOOR } },
     },
     'property-is': {

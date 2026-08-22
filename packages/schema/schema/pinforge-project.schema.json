@@ -173,6 +173,11 @@
               "initial": {
                 "default": 0,
                 "type": "number"
+              },
+              "countsDown": {
+                "default": false,
+                "description": "Counts itself down to zero as the game runs, so setting it to 1 means \"for the next second\". Used for hurt-and-flash time, a cooldown, or a level clock.",
+                "type": "boolean"
               }
             },
             "required": [
@@ -489,6 +494,11 @@
                     "initial": {
                       "default": 0,
                       "type": "number"
+                    },
+                    "countsDown": {
+                      "default": false,
+                      "description": "Counts itself down to zero as the game runs, so setting it to 1 means \"for the next second\". Used for hurt-and-flash time, a cooldown, or a level clock.",
+                      "type": "boolean"
                     }
                   },
                   "required": [
@@ -671,7 +681,7 @@
                 "properties": {
                   "kind": {
                     "default": "solid",
-                    "description": "solid pushes out of what it hits, trigger passes through and only reports the overlap to rules, none never collides.",
+                    "description": "solid is pushed back out of solid tiles, trigger passes through tiles and only reports overlaps to rules, none never collides at all. Entities never push each other apart, whatever their collider says: two of them are always free to overlap, and that overlap is what a rule about two things touching is for. Something that must physically block the player belongs in a tile layer.",
                     "type": "string",
                     "enum": [
                       "solid",
@@ -783,10 +793,13 @@
                         "properties": {
                           "direction": {
                             "default": "left",
+                            "description": "Which way it sets off. up and down are for free movement, which has no gravity to fall with.",
                             "type": "string",
                             "enum": [
                               "left",
-                              "right"
+                              "right",
+                              "up",
+                              "down"
                             ]
                           },
                           "turnAtWalls": {
@@ -795,6 +808,7 @@
                           },
                           "turnAtLedges": {
                             "default": true,
+                            "description": "Turn around rather than walk off an edge. Platform movement only.",
                             "type": "boolean"
                           }
                         },
@@ -847,6 +861,33 @@
                           "horizontal",
                           "vertical"
                         ]
+                      },
+                      "patrol": {
+                        "description": "Move back and forth along one axis without any event rules, turning at walls. The same idea platform movement has, for a game with no gravity.",
+                        "type": "object",
+                        "properties": {
+                          "direction": {
+                            "default": "left",
+                            "description": "Which way it sets off. up and down are for free movement, which has no gravity to fall with.",
+                            "type": "string",
+                            "enum": [
+                              "left",
+                              "right",
+                              "up",
+                              "down"
+                            ]
+                          },
+                          "turnAtWalls": {
+                            "default": true,
+                            "type": "boolean"
+                          },
+                          "turnAtLedges": {
+                            "default": true,
+                            "description": "Turn around rather than walk off an edge. Platform movement only.",
+                            "type": "boolean"
+                          }
+                        },
+                        "additionalProperties": false
                       }
                     },
                     "required": [
@@ -1090,6 +1131,33 @@
                   "type": {
                     "type": "string",
                     "const": "touches-tile"
+                  },
+                  "subject": {
+                    "type": "string",
+                    "maxLength": 70,
+                    "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                    "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                  },
+                  "tag": {
+                    "type": "string",
+                    "maxLength": 32,
+                    "pattern": "^[a-z0-9][a-z0-9-]*$",
+                    "description": "A tile tag such as \"solid\", \"one-way\" or \"hazard\"."
+                  }
+                },
+                "required": [
+                  "type",
+                  "subject",
+                  "tag"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "blocked-by-tile"
                   },
                   "subject": {
                     "type": "string",
@@ -1557,6 +1625,48 @@
                   "properties": {
                     "type": {
                       "type": "string",
+                      "const": "position-compare"
+                    },
+                    "subject": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "side": {
+                      "type": "string",
+                      "enum": [
+                        "left",
+                        "right",
+                        "above",
+                        "below"
+                      ]
+                    },
+                    "of": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "subject",
+                    "side",
+                    "of"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
                       "const": "chance"
                     },
                     "percent": {
@@ -1706,6 +1816,18 @@
                       "type": "string",
                       "maxLength": 70,
                       "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$"
+                    },
+                    "spreadX": {
+                      "default": 0,
+                      "description": "Put it up to this many pixels either side of that spot, picked at random. 0 means exactly there.",
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "spreadY": {
+                      "default": 0,
+                      "description": "The same, up and down.",
+                      "type": "number",
+                      "minimum": 0
                     }
                   },
                   "required": [
@@ -1902,6 +2024,40 @@
                   "required": [
                     "type",
                     "from",
+                    "into"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "copy-property"
+                    },
+                    "from": {
+                      "type": "string",
+                      "maxLength": 70,
+                      "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                      "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                    },
+                    "property": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "into": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "The variable to put it in."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "from",
+                    "property",
                     "into"
                   ],
                   "additionalProperties": false
@@ -2743,15 +2899,18 @@
                           "description": "A duration in seconds."
                         },
                         "patrol": {
-                          "description": "Walk back and forth without any event rules. Used by most simple enemies.",
+                          "description": "Move back and forth along one axis without any event rules, turning at walls. The same idea platform movement has, for a game with no gravity.",
                           "type": "object",
                           "properties": {
                             "direction": {
                               "default": "left",
+                              "description": "Which way it sets off. up and down are for free movement, which has no gravity to fall with.",
                               "type": "string",
                               "enum": [
                                 "left",
-                                "right"
+                                "right",
+                                "up",
+                                "down"
                               ]
                             },
                             "turnAtWalls": {
@@ -2760,6 +2919,7 @@
                             },
                             "turnAtLedges": {
                               "default": true,
+                              "description": "Turn around rather than walk off an edge. Platform movement only.",
                               "type": "boolean"
                             }
                           },
@@ -3170,6 +3330,33 @@
                         "type": {
                           "type": "string",
                           "const": "touches-tile"
+                        },
+                        "subject": {
+                          "type": "string",
+                          "maxLength": 70,
+                          "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                          "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                        },
+                        "tag": {
+                          "type": "string",
+                          "maxLength": 32,
+                          "pattern": "^[a-z0-9][a-z0-9-]*$",
+                          "description": "A tile tag such as \"solid\", \"one-way\" or \"hazard\"."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "subject",
+                        "tag"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "blocked-by-tile"
                         },
                         "subject": {
                           "type": "string",
@@ -3637,6 +3824,48 @@
                         "properties": {
                           "type": {
                             "type": "string",
+                            "const": "position-compare"
+                          },
+                          "subject": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "side": {
+                            "type": "string",
+                            "enum": [
+                              "left",
+                              "right",
+                              "above",
+                              "below"
+                            ]
+                          },
+                          "of": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "subject",
+                          "side",
+                          "of"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
                             "const": "chance"
                           },
                           "percent": {
@@ -3786,6 +4015,18 @@
                             "type": "string",
                             "maxLength": 70,
                             "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$"
+                          },
+                          "spreadX": {
+                            "default": 0,
+                            "description": "Put it up to this many pixels either side of that spot, picked at random. 0 means exactly there.",
+                            "type": "number",
+                            "minimum": 0
+                          },
+                          "spreadY": {
+                            "default": 0,
+                            "description": "The same, up and down.",
+                            "type": "number",
+                            "minimum": 0
                           }
                         },
                         "required": [
@@ -3982,6 +4223,40 @@
                         "required": [
                           "type",
                           "from",
+                          "into"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "copy-property"
+                          },
+                          "from": {
+                            "type": "string",
+                            "maxLength": 70,
+                            "pattern": "^(\\$self|\\$other|tag:[a-z0-9][a-z0-9-]*|[a-z0-9][a-z0-9-]*)$",
+                            "description": "An entity: $self, $other, tag:<tag>, an instance id or a prototype id."
+                          },
+                          "property": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "into": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "The variable to put it in."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "from",
+                          "property",
                           "into"
                         ],
                         "additionalProperties": false

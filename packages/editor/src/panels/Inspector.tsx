@@ -653,35 +653,86 @@ function MovementFields({
                 onChange={(gravity) => onChange({ ...movement, gravity })}
               />
             </Field>
-            <Checkbox
-              label="Walks back and forth by itself"
-              checked={Boolean(movement.patrol)}
-              hint="Turns at walls and at ledges, which is what most simple enemies need."
-              onChange={(on) =>
-                onChange({
-                  ...movement,
-                  patrol: on
-                    ? { direction: 'left', turnAtWalls: true, turnAtLedges: true }
-                    : undefined,
-                })
-              }
-            />
           </details>
+          <Patrol
+            movement={movement}
+            directions={['left', 'right']}
+            onChange={(patrol) => onChange({ ...movement, patrol })}
+          />
         </>
       ) : (
-        <Field label="Which way it can move">
-          <Select
-            value={movement.axes}
-            onChange={(axes) =>
-              onChange({ ...movement, axes: axes as 'both' | 'horizontal' | 'vertical' })
+        <>
+          <Field label="Which way it can move">
+            <Select
+              value={movement.axes}
+              onChange={(axes) =>
+                onChange({ ...movement, axes: axes as 'both' | 'horizontal' | 'vertical' })
+              }
+              choices={['both', 'horizontal', 'vertical'].map((one) => ({
+                value: one,
+                label: readable(one),
+              }))}
+            />
+          </Field>
+          <Patrol
+            movement={movement}
+            directions={
+              movement.axes === 'horizontal'
+                ? ['left', 'right']
+                : movement.axes === 'vertical'
+                  ? ['up', 'down']
+                  : ['left', 'right', 'up', 'down']
             }
-            choices={['both', 'horizontal', 'vertical'].map((one) => ({
-              value: one,
-              label: readable(one),
-            }))}
+            onChange={(patrol) => onChange({ ...movement, patrol })}
+          />
+        </>
+      )}
+    </>
+  );
+}
+
+type PatrolDirection = 'left' | 'right' | 'up' | 'down';
+type PatrolConfig = NonNullable<MovementComponent['patrol']>;
+
+/**
+ * "Walks back and forth by itself", for both kinds of movement. Which way it
+ * can set off depends on the movement: something with gravity cannot patrol
+ * upwards, and something locked to one axis cannot patrol across the other.
+ */
+function Patrol({
+  movement,
+  directions,
+  onChange,
+}: {
+  movement: MovementComponent;
+  directions: readonly PatrolDirection[];
+  onChange: (patrol: PatrolConfig | undefined) => void;
+}) {
+  const patrol = movement.patrol;
+  const first = directions[0] ?? 'left';
+  return (
+    <>
+      <Checkbox
+        label="Walks back and forth by itself"
+        checked={Boolean(patrol)}
+        hint="Turns around at a wall, with no rules at all. What most simple enemies need."
+        onChange={(on) =>
+          onChange(on ? { direction: first, turnAtWalls: true, turnAtLedges: true } : undefined)
+        }
+      />
+      {patrol ? (
+        <Field label="Sets off going">
+          <Select
+            value={
+              directions.includes(patrol.direction as PatrolDirection) ? patrol.direction : first
+            }
+            onChange={(direction) =>
+              onChange({ ...patrol, direction: direction as PatrolDirection })
+            }
+            choices={directions.map((one) => ({ value: one, label: readable(one) }))}
           />
         </Field>
-      )}
+      ) : null}
     </>
   );
 }
