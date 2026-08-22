@@ -268,12 +268,22 @@ export class Game implements RuntimeHost {
       for (const tag of tagsUnder(entity, world)) tileTouches.push([entity, tag]);
     }
 
+    // Leaving the level fires once, on the step the entity crosses out, and
+    // again only if it comes back in and leaves again. Before this it fired on
+    // every step the entity spent outside, so the ordinary rule "when the
+    // player falls out of the level, lose a life" spent every life in a
+    // second unless it happened to restart the level in the same breath.
     const leftScene: [Entity, SceneEdge][] = [];
+    const nowOutside = new Map<string, SceneEdge>();
     for (const entity of world.entities) {
       if (entity.destroyed) continue;
       const edge = outsideEdge(entity, world);
-      if (edge) leftScene.push([entity, edge]);
+      if (!edge) continue;
+      nowOutside.set(entity.id, edge);
+      if (world.outside.get(entity.id) !== edge) leftScene.push([entity, edge]);
     }
+    world.outside.clear();
+    for (const [id, edge] of nowOutside) world.outside.set(id, edge);
 
     const clicked: Entity[] = [];
     for (const point of this.clickQueue.splice(0)) {

@@ -145,7 +145,7 @@ Fires when an entity of that kind is destroyed.
 
 `leaves-scene`
 
-Fires when an entity crosses an edge of the scene.
+Fires once when an entity crosses an edge of the scene, and again only if it comes back and leaves again.
 
 ```json
 {"type":"leaves-scene","subject":"player","edge":"bottom"}

@@ -160,7 +160,7 @@ when <subject> is removed
 
 ### When something leaves the level
 
-Fires when an entity crosses an edge of the scene.
+Fires once when an entity crosses an edge of the scene, and again only if it comes back and leaves again.
 
 ```
 when <subject> leaves the level [at the <top / bottom / left / right>]

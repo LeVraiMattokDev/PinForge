@@ -395,3 +395,53 @@ describe('turning a rule off', () => {
     expect(Number(game.variable('score'))).toBeGreaterThan(Number(stopped));
   });
 });
+
+describe('leaving the level', () => {
+  /** A scene with no floor at all, so the player simply falls out of it. */
+  const bottomless = Array(6).fill('.'.repeat(10));
+
+  it('costs one life per fall, not one per step spent outside', () => {
+    // The wrong behaviour: the trigger fired on every step the entity was
+    // outside, so a single fall took sixty-odd lives a second. The example
+    // game only survived it by restarting the level in the same rule.
+    const game = makeGame({
+      rows: bottomless,
+      variables: [{ id: 'lives', type: 'number', initial: 3 }],
+      events: [
+        {
+          id: 'fell',
+          when: { type: 'leaves-scene', subject: 'player', edge: 'bottom' },
+          then: [{ type: 'change-variable', variable: 'lives', operator: 'subtract', value: 1 }],
+        },
+      ],
+    });
+
+    steps(game, 120);
+    expect(game.variable('lives')).toBe(2);
+  });
+
+  it('fires again when the entity comes back and leaves once more', () => {
+    const game = makeGame({
+      rows: bottomless,
+      variables: [{ id: 'lives', type: 'number', initial: 3 }],
+      events: [
+        {
+          id: 'fell',
+          when: { type: 'leaves-scene', subject: 'player', edge: 'bottom' },
+          then: [{ type: 'change-variable', variable: 'lives', operator: 'subtract', value: 1 }],
+        },
+      ],
+    });
+
+    steps(game, 120);
+    expect(game.variable('lives')).toBe(2);
+
+    // Put it back inside and let it fall out a second time.
+    const entity = player(game);
+    entity.y = 0;
+    entity.previousY = 0;
+    entity.velocityY = 0;
+    steps(game, 120);
+    expect(game.variable('lives')).toBe(1);
+  });
+});

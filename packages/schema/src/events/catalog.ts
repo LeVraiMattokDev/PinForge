@@ -101,7 +101,8 @@ export const TRIGGERS: Record<TriggerType, CatalogEntry> = {
   },
   'leaves-scene': {
     label: 'When something leaves the level',
-    summary: 'Fires when an entity crosses an edge of the scene.',
+    summary:
+      'Fires once when an entity crosses an edge of the scene, and again only if it comes back and leaves again.',
     modes: ANY_MODE,
     example: { type: 'leaves-scene', subject: 'player', edge: 'bottom' },
   },

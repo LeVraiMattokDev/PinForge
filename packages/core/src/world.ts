@@ -72,6 +72,12 @@ export class World {
   readonly entities: Entity[] = [];
   readonly camera: CameraState;
   readonly overlaps = new Set<string>();
+  /**
+   * Which entities are already outside the scene, and over which edge. Leaving
+   * is a thing that happens once, not a place you are, so this is what tells
+   * the two apart.
+   */
+  readonly outside = new Map<string, string>();
   readonly firedOnce = new Set<string>();
   readonly disabledRules = new Set<string>();
   readonly timers = new Map<string, number>();
