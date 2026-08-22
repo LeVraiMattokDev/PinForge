@@ -58,6 +58,9 @@ export interface RuntimeHost {
   goToScene(id: string): void;
   restartScene(): void;
   destroy(entity: Entity): void;
+  /** Whether this rule is switched off right now. */
+  ruleDisabled(id: string): boolean;
+  setRuleEnabled(id: string, enabled: boolean): void;
   queue(pending: PendingActions): void;
   takePending(): PendingActions[];
 }
@@ -66,11 +69,19 @@ export function rulesOf(host: RuntimeHost): readonly EventRule[] {
   return [...host.world.scene.events, ...host.project.globalEvents];
 }
 
+/**
+ * Triggers that are *about* an entity ceasing to exist. Their whole subject is
+ * something already gone, so the "skip a rule about something removed" guard
+ * below cannot apply to them, or they could never fire at all.
+ */
+const ABOUT_REMOVAL = new Set(['entity-destroyed', 'collision-ends']);
+
 export function runRules(host: RuntimeHost, signals: StepSignals, seconds: number): void {
   for (const rule of rulesOf(host)) {
     if (host.changingScene) return;
-    if (!rule.enabled || host.world.disabledRules.has(rule.id)) continue;
+    if (!rule.enabled || host.ruleDisabled(rule.id)) continue;
     if (rule.once && host.world.firedOnce.has(rule.id)) continue;
+    const aboutRemoval = ABOUT_REMOVAL.has(rule.when.type);
     for (const context of firings(host, rule.when, signals, rule.id, seconds)) {
       if (host.changingScene) return;
       if (rule.once && host.world.firedOnce.has(rule.id)) break;
@@ -80,8 +91,8 @@ export function runRules(host: RuntimeHost, signals: StepSignals, seconds: numbe
       // life when the player walks into one. Without this, squashing would also
       // hurt, because the first rule's bounce changes what "is falling" answers
       // for the second. A rule about something that no longer exists does not
-      // run.
-      if (context.self?.destroyed || context.other?.destroyed) continue;
+      // run, unless the removal is the very thing it is about.
+      if (!aboutRemoval && (context.self?.destroyed || context.other?.destroyed)) continue;
       if (!conditionsHold(host, rule.if, context)) continue;
       if (rule.once) host.world.firedOnce.add(rule.id);
       start(host, rule.then, context);
@@ -191,10 +202,23 @@ export function matches(reference: string, entity: Entity, context: RuleContext)
   return entity.id === reference || entity.prototypeId === reference;
 }
 
-/** Every living entity a reference points at. A copy is looked up before a kind. */
+/**
+ * Every entity a reference points at. A copy is looked up before a kind.
+ *
+ * A reference by kind, tag or id only ever finds something still alive. $self
+ * and $other are different: they mean "the entity this rule is about", and they
+ * go on meaning it for the rest of the step even once it has been removed.
+ * Without that, the most ordinary rule in any game with enemies — remove the
+ * enemy, then drop a coin where it was — would silently drop the coin in the
+ * top left corner of the level, and the order of two actions would quietly
+ * decide whether the game was right.
+ *
+ * Writing to something already gone is harmless: nothing steps it and nothing
+ * draws it. Asking whether it exists is not, so entity-exists checks.
+ */
 export function resolve(world: World, reference: string, context: RuleContext): Entity[] {
-  if (reference === '$self') return alive(context.self);
-  if (reference === '$other') return alive(context.other);
+  if (reference === '$self') return about(context.self);
+  if (reference === '$other') return about(context.other);
   const living = world.entities.filter((entity) => !entity.destroyed);
   if (reference.startsWith('tag:')) {
     const tag = reference.slice('tag:'.length);
@@ -204,8 +228,8 @@ export function resolve(world: World, reference: string, context: RuleContext): 
   return byId.length > 0 ? byId : living.filter((entity) => entity.prototypeId === reference);
 }
 
-function alive(entity: Entity | undefined): Entity[] {
-  return entity && !entity.destroyed ? [entity] : [];
+function about(entity: Entity | undefined): Entity[] {
+  return entity ? [entity] : [];
 }
 
 function conditionsHold(
@@ -230,7 +254,7 @@ function holds(host: RuntimeHost, condition: Condition, context: RuleContext): b
         entity.tags.has(condition.tag),
       );
     case 'entity-exists':
-      return resolve(world, condition.entity, context).length > 0;
+      return resolve(world, condition.entity, context).some((entity) => !entity.destroyed);
     case 'action-held':
       return host.input.isHeld(condition.action);
     case 'distance-is': {
@@ -416,10 +440,10 @@ function perform(host: RuntimeHost, action: Action, context: RuleContext): void 
       world.map.setTile(action.layer, action.column, action.row, action.tile);
       return;
     case 'enable-rule':
-      world.disabledRules.delete(action.rule);
+      host.setRuleEnabled(action.rule, true);
       return;
     case 'disable-rule':
-      world.disabledRules.add(action.rule);
+      host.setRuleEnabled(action.rule, false);
       return;
     case 'wait':
       return;

@@ -43,6 +43,13 @@ export class Game implements RuntimeHost {
   private readonly prototypes: Map<string, EntityPrototype>;
   private readonly scenes: Map<string, Scene>;
   private readonly variables = new Map<string, Value>();
+  /**
+   * A rule's off switch lives where the rule lives: a global rule turned off
+   * stays off across levels and restarts, while a level's own rule is part of
+   * that level and comes back with it, the same way "only the first time" does.
+   */
+  private readonly disabledGlobalRules = new Set<string>();
+  private readonly globalRuleIds: Set<string>;
   private pending: PendingActions[] = [];
   private accumulator = 0;
   private startedGame = false;
@@ -64,6 +71,7 @@ export class Game implements RuntimeHost {
     this.assets = options.assets ?? noAssets;
     this.prototypes = new Map(project.entities.map((entity) => [entity.id, entity]));
     this.scenes = new Map(project.scenes.map((scene) => [scene.id, scene]));
+    this.globalRuleIds = new Set(project.globalEvents.map((rule) => rule.id));
     for (const variable of project.variables) this.variables.set(variable.id, variable.initial);
 
     const first = this.scenes.get(project.settings.startScene) ?? project.scenes[0];
@@ -174,6 +182,20 @@ export class Game implements RuntimeHost {
     this.destroyedThisStep.push(entity);
   }
 
+  ruleDisabled(id: string): boolean {
+    return this.globalRuleIds.has(id)
+      ? this.disabledGlobalRules.has(id)
+      : this.world.disabledRules.has(id);
+  }
+
+  setRuleEnabled(id: string, enabled: boolean): void {
+    const switched = this.globalRuleIds.has(id)
+      ? this.disabledGlobalRules
+      : this.world.disabledRules;
+    if (enabled) switched.delete(id);
+    else switched.add(id);
+  }
+
   queue(pending: PendingActions): void {
     this.pending.push(pending);
   }
@@ -222,14 +244,21 @@ export class Game implements RuntimeHost {
       }
     }
 
+    // Something removed last step is gone from the world but still has to be
+    // findable here: an overlap that ended because one side ceased to exist
+    // ended all the same, and a rule tracking "am I standing in the fire" would
+    // otherwise stay stuck on yes for the rest of the game.
     const byId = new Map(world.entities.map((entity) => [entity.id, entity]));
+    for (const entity of this.destroyedLastStep) {
+      if (!byId.has(entity.id)) byId.set(entity.id, entity);
+    }
     const collisionsEnded: [Entity, Entity][] = [];
     for (const key of world.overlaps) {
       if (current.has(key)) continue;
       const [left, right] = key.split('|');
       const a = left === undefined ? undefined : byId.get(left);
       const b = right === undefined ? undefined : byId.get(right);
-      if (a && b && !a.destroyed && !b.destroyed) collisionsEnded.push([a, b]);
+      if (a && b) collisionsEnded.push([a, b]);
     }
     world.overlaps.clear();
     for (const key of current) world.overlaps.add(key);

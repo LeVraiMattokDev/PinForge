@@ -22,6 +22,7 @@ export interface WorldOptions {
   entities?: ProjectInput['scenes'][number]['entities'];
   prototypes?: ProjectInput['entities'];
   events?: NonNullable<ProjectInput['scenes'][number]['events']>;
+  globalEvents?: ProjectInput['globalEvents'];
   variables?: ProjectInput['variables'];
   camera?: ProjectInput['scenes'][number]['camera'];
   scenes?: ProjectInput['scenes'];
@@ -56,6 +57,7 @@ export function makeGame(options: WorldOptions = {}): Game {
         components: { collider: {}, movement: { mode: 'platform' } },
       },
     ],
+    globalEvents: options.globalEvents ?? [],
     scenes: options.scenes ?? [
       {
         id: 'level-1',

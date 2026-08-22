@@ -9,3 +9,6 @@ packages/schema/schema/*.json
 docs/
 packages/cli/runtime/pinforge-runtime.js
 packages/editor/src/starter.generated.ts
+
+# Nested checkouts are not this repository's code to format.
+.claude/worktrees/

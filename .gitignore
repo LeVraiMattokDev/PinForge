@@ -11,3 +11,7 @@ packages/cli/runtime/pinforge-runtime.js
 
 # Generated at build time by packages/editor/scripts/build-starter.mjs
 packages/editor/src/starter.generated.ts
+
+# Scratch checkouts made by agent tooling. Not .claude itself: project
+# configuration under it is meant to be committed.
+.claude/worktrees/

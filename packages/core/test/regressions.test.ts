@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ProjectInput } from '@pinforge/schema';
-import { makeGame, player, steps, stepUntil } from './helpers.js';
+import { FLOOR_ROWS, makeGame, player, steps, stepUntil } from './helpers.js';
 
 /**
  * One test per bug that has been fixed, so none of them can come back. Each
@@ -149,5 +149,249 @@ describe('repeating timers', () => {
 
     expect(game.variable('score')).toBeLessThanOrEqual(3);
     expect(game.variable('score')).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * Everything about an entity that has just stopped existing. These four bugs
+ * were one bug wearing four coats: the engine could not decide whether
+ * something removed was still addressable, and answered differently in every
+ * place it was asked.
+ */
+describe('something that has just been removed', () => {
+  const PAIR: NonNullable<ProjectInput['entities']> = [
+    {
+      id: 'player',
+      size: { width: 12, height: 16 },
+      tags: ['player'],
+      components: { collider: {}, movement: { mode: 'platform' } },
+    },
+    {
+      id: 'slime',
+      size: { width: 12, height: 12 },
+      tags: ['enemy'],
+      components: { collider: { kind: 'trigger' } },
+    },
+    {
+      id: 'coin',
+      size: { width: 8, height: 8 },
+      tags: ['pickup'],
+      components: { collider: { kind: 'trigger' } },
+    },
+  ];
+
+  /** A player standing on the floor with a slime already touching it. */
+  const touching = [
+    { id: 'player-1', prototype: 'player', x: 100, y: 64 },
+    { id: 'slime-1', prototype: 'slime', x: 104, y: 68 },
+  ];
+
+  it('sets off "when something is removed"', () => {
+    // The wrong behaviour: the trigger was documented, offered in the editor
+    // and in PinScript, and could never fire once, because the guard that
+    // skips a rule about a removed entity skipped every one of its firings.
+    const game = makeGame({
+      variables: [{ id: 'score', type: 'number', initial: 0 }],
+      prototypes: PAIR,
+      entities: touching,
+      events: [
+        {
+          id: 'take',
+          when: { type: 'collides', subject: 'player', with: 'slime' },
+          then: [{ type: 'destroy', target: '$other' }],
+        },
+        {
+          id: 'mourn',
+          when: { type: 'entity-destroyed', subject: 'slime' },
+          then: [{ type: 'change-variable', variable: 'score', value: 1 }],
+        },
+      ],
+    });
+
+    expect(stepUntil(game, (one) => one.variable('score') === 1, 60)).toBeGreaterThan(-1);
+  });
+
+  it('can still say where it was, whichever order the actions are in', () => {
+    // The wrong behaviour: $other stopped resolving the moment it was
+    // destroyed, so "remove the enemy, then drop a coin where it was" dropped
+    // the coin at the top left corner of the level. Silently, and only when
+    // the two actions were written in that order.
+    const drop = (first: 'destroy' | 'spawn') =>
+      makeGame({
+        prototypes: PAIR,
+        entities: touching,
+        events: [
+          {
+            id: 'squash',
+            when: { type: 'collides', subject: 'player', with: 'slime' },
+            then:
+              first === 'destroy'
+                ? [
+                    { type: 'destroy', target: '$other' },
+                    { type: 'spawn', entity: 'coin', x: 0, y: -8, relativeTo: '$other' },
+                  ]
+                : [
+                    { type: 'spawn', entity: 'coin', x: 0, y: -8, relativeTo: '$other' },
+                    { type: 'destroy', target: '$other' },
+                  ],
+          },
+        ],
+      });
+
+    for (const order of ['destroy', 'spawn'] as const) {
+      const game = drop(order);
+      steps(game, 10);
+      const coin = game.world.entities.find((one) => one.prototypeId === 'coin');
+      expect(coin, `${order} first: no coin was dropped`).toBeDefined();
+      // The slime stood at x = 104, y = 68.
+      expect(coin?.x, `${order} first`).toBe(104);
+      expect(coin?.y, `${order} first`).toBe(60);
+    }
+  });
+
+  it('does not claim to still exist', () => {
+    const game = makeGame({
+      variables: [{ id: 'score', type: 'number', initial: 0 }],
+      prototypes: PAIR,
+      entities: touching,
+      events: [
+        {
+          id: 'squash',
+          when: { type: 'collides', subject: 'player', with: 'slime' },
+          then: [{ type: 'destroy', target: '$other' }],
+        },
+        {
+          id: 'gone',
+          when: { type: 'entity-destroyed', subject: 'slime' },
+          // Reading where it was must work; asking whether it is still there
+          // must answer no.
+          if: [{ type: 'entity-exists', entity: '$self', negate: true }],
+          then: [{ type: 'change-variable', variable: 'score', value: 1 }],
+        },
+      ],
+    });
+
+    expect(stepUntil(game, (one) => one.variable('score') === 1, 60)).toBeGreaterThan(-1);
+  });
+
+  it('ends the overlap it was part of', () => {
+    // The wrong behaviour: a rule tracking "am I standing in the fire" with a
+    // pair of collides and collision-ends rules stayed stuck on yes forever
+    // once the fire was removed, because the ending was never reported.
+    const game = makeGame({
+      variables: [{ id: 'touching', type: 'boolean', initial: false }],
+      prototypes: PAIR,
+      entities: touching,
+      events: [
+        {
+          id: 'on',
+          when: { type: 'collides', subject: 'player', with: 'slime' },
+          then: [
+            { type: 'set-variable', variable: 'touching', value: true },
+            { type: 'destroy', target: '$other' },
+          ],
+        },
+        {
+          id: 'off',
+          when: { type: 'collision-ends', subject: 'player', with: 'slime' },
+          then: [{ type: 'set-variable', variable: 'touching', value: false }],
+        },
+      ],
+    });
+
+    expect(stepUntil(game, (one) => one.variable('touching') === true, 60)).toBeGreaterThan(-1);
+    expect(stepUntil(game, (one) => one.variable('touching') === false, 60)).toBeGreaterThan(-1);
+  });
+});
+
+describe('turning a rule off', () => {
+  const ticker = (id: string) => ({
+    id,
+    when: { type: 'every-frame' } as const,
+    then: [{ type: 'change-variable' as const, variable: 'score', value: 1 }],
+  });
+
+  /** Two levels, so a rule can be watched across a change of scene. */
+  const twoLevels = (events: NonNullable<ProjectInput['scenes'][number]['events']>) =>
+    [1, 2].map((number) => ({
+      id: `level-${number}`,
+      tileSize: 16,
+      size: { columns: 10, rows: 6 },
+      layers: [
+        {
+          id: 'ground',
+          tileset: 'ground',
+          collides: true,
+          legend: { '.': null, '#': 0 },
+          rows: FLOOR_ROWS,
+        },
+      ],
+      entities: [{ id: `player-${number}`, prototype: 'player', x: 32, y: 0 }],
+      camera: { mode: 'fixed' as const },
+      events: number === 1 ? events : [],
+    }));
+
+  it('keeps a rule for the whole game switched off across a restart', () => {
+    // The wrong behaviour: every off switch lived on the level being played, so
+    // losing a life and starting again brought back the rule the game had
+    // just turned off.
+    const game = makeGame({
+      globalEvents: [ticker('ticker')],
+      events: [
+        {
+          id: 'silence',
+          when: { type: 'scene-starts' },
+          then: [{ type: 'disable-rule', rule: 'ticker' }],
+        },
+      ],
+    });
+
+    steps(game, 5);
+    const stopped = game.variable('score');
+    game.restartScene();
+    steps(game, 10);
+    expect(game.variable('score')).toBe(stopped);
+  });
+
+  it('keeps a rule for the whole game switched off across a change of level', () => {
+    const game = makeGame({
+      globalEvents: [ticker('ticker')],
+      scenes: twoLevels([
+        {
+          id: 'silence',
+          when: { type: 'scene-starts' },
+          then: [{ type: 'disable-rule', rule: 'ticker' }],
+        },
+      ]),
+    });
+
+    steps(game, 5);
+    const stopped = game.variable('score');
+    game.goToScene('level-2');
+    steps(game, 10);
+    expect(game.variable('score')).toBe(stopped);
+  });
+
+  it("brings a level's own rule back with the level, like once only does", () => {
+    const game = makeGame({
+      events: [
+        ticker('ticker'),
+        {
+          id: 'silence',
+          when: { type: 'every-seconds', seconds: 0.05 },
+          then: [{ type: 'disable-rule', rule: 'ticker' }],
+        },
+      ],
+    });
+
+    steps(game, 10);
+    const stopped = game.variable('score');
+    game.restartScene();
+    // The first step carries the change of level out and runs no rules; the
+    // level is only really running on the one after it.
+    steps(game, 2);
+    // The level came back, and so did its own rule, for at least one step
+    // before the level switched it off again.
+    expect(Number(game.variable('score'))).toBeGreaterThan(Number(stopped));
   });
 });
