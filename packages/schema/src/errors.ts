@@ -27,6 +27,14 @@ export class ProjectValidationError extends Error {
   }
 }
 
+/**
+ * error   the game would not run, or would run wrongly in a way nothing could
+ *         have meant. Refused.
+ * warning legal, and almost always a mistake. Said out loud, never refused,
+ *         because sometimes it really is what someone meant.
+ */
+export type IssueSeverity = 'error' | 'warning';
+
 export interface ValidationIssue {
   /** Where the problem is, as a path into the document, for example /scenes/0/layers/1. */
   readonly path: string;
@@ -34,4 +42,13 @@ export interface ValidationIssue {
   readonly code: string;
   /** What is wrong, written for a person. */
   readonly message: string;
+  readonly severity: IssueSeverity;
+}
+
+export function errorsAmong(issues: readonly ValidationIssue[]): ValidationIssue[] {
+  return issues.filter((issue) => issue.severity === 'error');
+}
+
+export function warningsAmong(issues: readonly ValidationIssue[]): ValidationIssue[] {
+  return issues.filter((issue) => issue.severity === 'warning');
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseProject, validateProject, type ProjectInput } from '../src/index.js';
+import { errorsAmong, parseProject, validateProject, type ProjectInput } from '../src/index.js';
 
 /** A small but complete platformer, used as the starting point for every case below. */
 function base(): ProjectInput {
@@ -352,5 +352,105 @@ describe('instances', () => {
     );
     expect(issues[0]?.code).toBe('wrong-movement-field');
     expect(issues[0]?.message).toContain('axes');
+  });
+});
+
+/**
+ * The trap two playtesters found independently, each with a working
+ * reproduction: a rule that asks something about a group and then acts on the
+ * whole group. It is legal, so it is warned about rather than refused.
+ */
+describe('a rule that checks one of a group and then acts on all of them', () => {
+  const withRule = (rule: NonNullable<ProjectInput['scenes'][number]['events']>[number]) => {
+    const project = base();
+    project.entities = [
+      ...project.entities!,
+      {
+        id: 'slime',
+        size: { width: 12, height: 12 },
+        tags: ['enemy'],
+        properties: [{ id: 'hits-left', type: 'number', initial: 3 }],
+        components: { collider: { kind: 'trigger' } },
+      },
+    ];
+    project.scenes![0]!.entities = [
+      ...project.scenes![0]!.entities!,
+      { id: 'slime-1', prototype: 'slime', x: 40, y: 60 },
+    ];
+    project.scenes![0]!.events = [rule];
+    return validateProject(parseProject(project));
+  };
+
+  it('is warned about, not refused', () => {
+    const issues = withRule({
+      id: 'wipe',
+      when: { type: 'every-frame' },
+      if: [
+        {
+          type: 'property-is',
+          target: 'tag:enemy',
+          property: 'hits-left',
+          operator: 'at-most',
+          value: 0,
+        },
+      ],
+      then: [{ type: 'destroy', target: 'tag:enemy' }],
+    });
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.severity).toBe('warning');
+    expect(issues[0]?.code).toBe('group-broadcast');
+    expect(issues[0]?.message).toContain('every single one');
+    // A warning must never stop the game opening.
+    expect(errorsAmong(issues)).toEqual([]);
+  });
+
+  it('says nothing about the same rule written about one entity', () => {
+    const issues = withRule({
+      id: 'squash',
+      when: { type: 'collides', subject: 'player', with: 'slime' },
+      if: [
+        {
+          type: 'property-is',
+          target: '$other',
+          property: 'hits-left',
+          operator: 'at-most',
+          value: 0,
+        },
+      ],
+      then: [{ type: 'destroy', target: '$other' }],
+    });
+
+    expect(issues).toEqual([]);
+  });
+
+  it('says nothing when the check is not about the group being acted on', () => {
+    const issues = withRule({
+      id: 'clear-them',
+      when: { type: 'every-frame' },
+      if: [{ type: 'variable-is', variable: 'score', operator: 'at-least', value: 10 }],
+      then: [{ type: 'destroy', target: 'tag:enemy' }],
+    });
+
+    expect(issues).toEqual([]);
+  });
+
+  it('says nothing about a check on one particular copy', () => {
+    const issues = withRule({
+      id: 'one-slime',
+      when: { type: 'every-frame' },
+      if: [
+        {
+          type: 'property-is',
+          target: 'slime-1',
+          property: 'hits-left',
+          operator: 'at-most',
+          value: 0,
+        },
+      ],
+      then: [{ type: 'destroy', target: 'slime-1' }],
+    });
+
+    expect(issues).toEqual([]);
   });
 });

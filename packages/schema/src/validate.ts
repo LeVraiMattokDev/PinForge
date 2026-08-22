@@ -1,7 +1,12 @@
 import * as z from 'zod';
 import { KNOWN_TILE_TAGS } from './tilesets.js';
 import { MOVEMENT_FIELDS_BY_MODE, MOVEMENT_MODES } from './components.js';
-import { ProjectFormatError, ProjectValidationError, type ValidationIssue } from './errors.js';
+import {
+  ProjectFormatError,
+  ProjectValidationError,
+  errorsAmong,
+  type ValidationIssue,
+} from './errors.js';
 import { Project } from './project.js';
 import { ACTIONS, CONDITIONS, TRIGGERS, type CatalogEntry } from './events/catalog.js';
 import { parseEntityRef } from './events/refs.js';
@@ -59,11 +64,11 @@ export function loadProject(input: unknown): { project: Project; applied: readon
 }
 
 export function assertValidProject(project: Project): void {
-  const issues = validateProject(project);
-  if (issues.length > 0) {
+  const errors = errorsAmong(validateProject(project));
+  if (errors.length > 0) {
     throw new ProjectValidationError(
       'This project has problems that would stop it running.',
-      issues,
+      errors,
     );
   }
 }
@@ -72,7 +77,12 @@ class Issues {
   private readonly collected: ValidationIssue[] = [];
 
   add(path: string, code: string, message: string): void {
-    this.collected.push({ path, code, message });
+    this.collected.push({ path, code, message, severity: 'error' });
+  }
+
+  /** Legal, and almost always a mistake. Never a refusal. */
+  warn(path: string, code: string, message: string): void {
+    this.collected.push({ path, code, message, severity: 'warning' });
   }
 
   get list(): ValidationIssue[] {
@@ -91,6 +101,10 @@ interface ProjectIndex {
   readonly entityTags: Set<string>;
   readonly tileTags: Set<string>;
   readonly instancesAnywhere: Map<string, EntityInstance>;
+  /** The most copies of a kind that can be in one level at once. */
+  readonly mostCopiesOf: Map<string, number>;
+  /** Kinds some rule creates while the game runs, so there can be more of them. */
+  readonly spawnedKinds: Set<string>;
   readonly layersAnywhere: Set<string>;
   readonly ruleIdsAnywhere: Set<string>;
 }
@@ -165,13 +179,26 @@ function buildIndex(project: Project): ProjectIndex {
   const instancesAnywhere = new Map<string, EntityInstance>();
   const layersAnywhere = new Set<string>();
   const ruleIdsAnywhere = new Set<string>(project.globalEvents.map((rule) => rule.id));
+  const mostCopiesOf = new Map<string, number>();
+  const spawnedKinds = new Set<string>();
+  for (const rule of project.globalEvents) {
+    for (const action of rule.then) if (action.type === 'spawn') spawnedKinds.add(action.entity);
+  }
   for (const scene of project.scenes) {
     scenes.set(scene.id, scene);
     for (const layer of scene.layers) layersAnywhere.add(layer.id);
-    for (const rule of scene.events) ruleIdsAnywhere.add(rule.id);
+    for (const rule of scene.events) {
+      ruleIdsAnywhere.add(rule.id);
+      for (const action of rule.then) if (action.type === 'spawn') spawnedKinds.add(action.entity);
+    }
+    const hereByKind = new Map<string, number>();
     for (const instance of scene.entities) {
       if (!instancesAnywhere.has(instance.id)) instancesAnywhere.set(instance.id, instance);
       for (const tag of instance.tags) entityTags.add(tag);
+      hereByKind.set(instance.prototype, (hereByKind.get(instance.prototype) ?? 0) + 1);
+    }
+    for (const [kind, count] of hereByKind) {
+      mostCopiesOf.set(kind, Math.max(mostCopiesOf.get(kind) ?? 0, count));
     }
   }
 
@@ -186,6 +213,8 @@ function buildIndex(project: Project): ProjectIndex {
     entityTags,
     tileTags,
     instancesAnywhere,
+    mostCopiesOf,
+    spawnedKinds,
     layersAnywhere,
     ruleIdsAnywhere,
   };
@@ -513,6 +542,84 @@ function checkRule(
   });
   rule.then.forEach((action, position) => {
     checkAction(action, `${path}/then/${position}`, scope, index, issues, context);
+  });
+  checkGroupBroadcast(rule, path, scope, index, issues);
+}
+
+/** Every entity a condition asks something about, one entity at a time. */
+function conditionSubjects(condition: Condition): string[] {
+  switch (condition.type) {
+    case 'property-is':
+    case 'has-tag':
+    case 'is-on-ground':
+    case 'is-falling':
+      return [condition.target];
+    case 'distance-is':
+      return [condition.from, condition.to];
+    default:
+      return [];
+  }
+}
+
+/**
+ * Whether a reference can really point at more than one entity at the same
+ * time. A tag exists to name a group, so it always can. A kind only can when
+ * the game actually has more than one of it: warning about "the player", of
+ * which there is exactly one, would be noise, and a warning people learn to
+ * ignore is worse than no warning at all.
+ */
+function pointsAtMany(ref: string, scope: RuleScope, index: ProjectIndex): boolean {
+  const resolved = parseEntityRef(ref);
+  if (!resolved) return false;
+  if (resolved.kind === 'tag') return true;
+  if (resolved.kind !== 'named') return false;
+  // A copy in the level wins over a kind, and there is only ever one of those.
+  if (scope.instances.has(resolved.id)) return false;
+  if (!index.prototypes.has(resolved.id)) return false;
+  const placed = index.mostCopiesOf.get(resolved.id) ?? 0;
+  return placed > 1 || (placed > 0 && index.spawnedKinds.has(resolved.id));
+}
+
+/**
+ * The trap two playtesters found independently, each with a working
+ * reproduction: a rule that asks something about a group and then acts on the
+ * same group.
+ *
+ *   IF hits-left of tag:enemy is at most 0 THEN remove tag:enemy
+ *
+ * The check is answered by "is there any one of them like this", and the action
+ * is carried out on every single one. So one weak enemy running out of health
+ * anywhere on screen removes the whole wave, healthy ones included — with no
+ * error, and a game that carries on looking plausible. It is legal, and once in
+ * a while it really is what someone meant, so it is said out loud rather than
+ * refused.
+ */
+function checkGroupBroadcast(
+  rule: EventRule,
+  path: string,
+  scope: RuleScope,
+  index: ProjectIndex,
+  issues: Issues,
+): void {
+  const asked = new Set<string>();
+  for (const condition of rule.if) {
+    for (const ref of conditionSubjects(condition)) {
+      if (pointsAtMany(ref, scope, index)) asked.add(ref);
+    }
+  }
+  if (asked.size === 0) return;
+
+  const warned = new Set<string>();
+  rule.then.forEach((action, position) => {
+    if (!('target' in action)) return;
+    const ref = action.target;
+    if (!asked.has(ref) || warned.has(ref)) return;
+    warned.add(ref);
+    issues.warn(
+      `${path}/then/${position}/target`,
+      'group-broadcast',
+      `This rule checks something about "${ref}" and then acts on "${ref}" as well. The check passes when any one of them matches, but the action runs on every single one, so one of them matching would affect all of them. If you meant only the one that matched, make the rule about that entity — a rule about two things touching, or about something being removed — and point at $self or $other instead.`,
+    );
   });
 }
 

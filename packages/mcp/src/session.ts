@@ -3,10 +3,13 @@ import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { statSync } from 'node:fs';
 import {
   ProjectValidationError,
+  errorsAmong,
   migrateToCurrent,
   parseProject,
   validateProject,
+  warningsAmong,
   type Project,
+  type ValidationIssue,
 } from '@pinforge/schema';
 import { diffJson, type Change } from './diff.js';
 
@@ -79,12 +82,17 @@ export class ProjectSession {
     return diffJson(before, after);
   }
 
+  /** Anything the last change was legal but unwise about. */
+  warnings: readonly ValidationIssue[] = [];
+
   private check(document: JsonObject): Project {
     const project = parseProject(document);
     const issues = validateProject(project);
-    if (issues.length > 0) {
-      throw new ProjectValidationError('That change would leave the game broken.', issues);
+    const errors = errorsAmong(issues);
+    if (errors.length > 0) {
+      throw new ProjectValidationError('That change would leave the game broken.', errors);
     }
+    this.warnings = warningsAmong(issues);
     return project;
   }
 }

@@ -289,7 +289,14 @@ export class Workspace {
   }
 
   report(changes: readonly Change[]): string {
-    return describeChanges(changes);
+    const described = describeChanges(changes);
+    const warnings = this.session?.warnings ?? [];
+    if (warnings.length === 0) return described;
+    // A warning is not a refusal, so the change went through. Saying so is the
+    // whole point of having warned.
+    return [described, '', 'Worth a look:', ...warnings.map((one) => `- ${one.message}`)].join(
+      '\n',
+    );
   }
 
   private need(): ProjectSession {

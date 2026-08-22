@@ -1,6 +1,8 @@
 import {
+  errorsAmong,
   parseProject,
   validateProject,
+  warningsAmong,
   type Project,
   type ValidationIssue,
 } from '@pinforge/schema';
@@ -88,13 +90,19 @@ export class EditorStore {
 
   getState = (): EditorState => this.state;
 
-  /** Applies a change to the project. Refuses anything that would break it. */
+  /**
+   * Applies a change to the project. Refuses anything that would break it, and
+   * lets through anything that is merely unwise, with a word about why.
+   */
   apply(command: Command): void {
     let next: Project;
+    let advice: string | undefined;
     try {
       next = command.run(this.state.project);
       const issues = validateProject(next);
-      if (issues.length > 0) throw new RefusedChange(issues);
+      const errors = errorsAmong(issues);
+      if (errors.length > 0) throw new RefusedChange(errors);
+      advice = adviceFrom(issues);
     } catch (error) {
       this.set({ problem: explain(error) });
       return;
@@ -112,7 +120,7 @@ export class EditorStore {
       if (this.past.length > HISTORY_LIMIT) this.past.shift();
     }
     this.future = [];
-    this.set({ project: next, problem: undefined, changedSinceSave: true });
+    this.set({ project: next, problem: advice, changedSinceSave: true });
   }
 
   undo(): void {
@@ -133,8 +141,8 @@ export class EditorStore {
   replaceProject(document: unknown): void {
     try {
       const project = parseProject(document);
-      const issues = validateProject(project);
-      if (issues.length > 0) throw new RefusedChange(issues);
+      const errors = errorsAmong(validateProject(project));
+      if (errors.length > 0) throw new RefusedChange(errors);
       this.past = [];
       this.future = [];
       const scene = project.scenes.find((one) => one.id === project.settings.startScene);
@@ -185,6 +193,13 @@ class RefusedChange extends Error {
   constructor(readonly issues: readonly ValidationIssue[]) {
     super(issues.map((issue) => issue.message).join(' '));
   }
+}
+
+/** What to say about a change that was allowed but is probably not meant. */
+function adviceFrom(issues: readonly ValidationIssue[]): string | undefined {
+  const warnings = warningsAmong(issues);
+  if (warnings.length === 0) return undefined;
+  return `Worth a look: ${warnings.map((issue) => issue.message).join('\n')}`;
 }
 
 function explain(error: unknown): string {
