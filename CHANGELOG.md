@@ -192,3 +192,14 @@ player`, and the same for right, above and below. Paired with setting a
 - A wait was thrown away, without a word, by any change of level from any rule,
   so the shape the documentation itself teaches for losing a game silently did
   nothing whenever something else changed the level inside that pause.
+- Clicking a kind in the sidebar to place a copy of it named that copy after the
+  kind itself, because only the level's other copies were checked for a clash
+  and never the project's kinds. The editor then refused its own change with
+  "rules could not tell them apart", so the first copy of every kind could not
+  be placed at all. Copies are now named after their kind and numbered from one,
+  the way a project written by hand does it.
+- The banner that reports a refused change was taking the row meant to hold the
+  whole editor, so it stretched to a quarter of the window and pushed the level,
+  the sidebar and the inspector into a row of their own. It is a compact strip
+  again, and every part of the shell now says which row it belongs in rather
+  than being placed automatically.

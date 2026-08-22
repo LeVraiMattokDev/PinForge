@@ -149,6 +149,21 @@ export function nextId(taken: readonly string[], stem: string): string {
   return `${stem}-${Date.now()}`;
 }
 
+/**
+ * The id for a new copy of something. A copy is always named after its kind and
+ * numbered from one, never left bare, because a bare name is the kind's own id
+ * and a project where a copy shadows a kind is refused: rules could not tell
+ * the two apart. Numbering from one also matches how projects are written by
+ * hand, where the first player is player-1.
+ */
+export function nextInstanceId(taken: readonly string[], prototypeId: string): string {
+  for (let number = 1; number < 1000; number += 1) {
+    const id = `${prototypeId}-${number}`;
+    if (!taken.includes(id)) return id;
+  }
+  return `${prototypeId}-${Date.now()}`;
+}
+
 function addLevel(store: Store, scenes: readonly Scene[]): void {
   const id = nextId(
     scenes.map((one) => one.id),
@@ -198,8 +213,13 @@ function addGroundLayer(store: Store, scene: Scene, tilesetId: string | undefine
 
 function place(store: Store, scene: Scene, prototypeId: string): void {
   const instance: EntityInstance = {
-    id: nextId(
-      scene.entities.map((one) => one.id),
+    // Both lists: a copy may not take the name of another copy, nor of any
+    // kind in the project.
+    id: nextInstanceId(
+      [
+        ...scene.entities.map((one) => one.id),
+        ...store.getState().project.entities.map((one) => one.id),
+      ],
       prototypeId,
     ),
     prototype: prototypeId,

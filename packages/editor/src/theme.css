@@ -51,10 +51,32 @@ textarea {
 
 /* --- shell ------------------------------------------------------------- */
 
+/*
+ * Four rows, and each child is told which one it is in. The banner that reports
+ * a refused change is not always there, and with rows placed automatically it
+ * landed in the row meant to hold the whole editor: it stretched to a quarter
+ * of the window and pushed everything else into a row of its own.
+ */
 .shell {
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
   height: 100%;
+}
+
+.shell > .header {
+  grid-row: 1;
+}
+
+.shell > .tabs {
+  grid-row: 2;
+}
+
+.shell > .problem {
+  grid-row: 3;
+}
+
+.shell > .body {
+  grid-row: 4;
 }
 
 .header {

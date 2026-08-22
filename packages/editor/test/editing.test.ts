@@ -3,6 +3,7 @@ import { parseProject, type ProjectInput } from '@pinforge/schema';
 import * as edit from '../src/state/commands.js';
 import { EditorStore } from '../src/state/store.js';
 import { makeAutosaver, projectFileName } from '../src/state/storage.js';
+import { nextId, nextInstanceId } from '../src/panels/Sidebar.js';
 
 function project(): ProjectInput {
   return {
@@ -225,3 +226,44 @@ function parsedInstance(id: string) {
     overrides: {},
   };
 }
+
+describe('placing a copy of something in a level', () => {
+  /**
+   * Clicking a kind in the sidebar to place the first copy of it used to make
+   * an id equal to the kind's own, because only the level's copies were checked
+   * for a clash and never the project's kinds. The editor then refused its own
+   * change with "rules could not tell them apart", so the first copy of every
+   * kind could not be placed at all.
+   */
+  it('never names a copy after the kind it is a copy of', () => {
+    const editor = store();
+    const copies = editor.getState().project.scenes[0]!.entities.map((one) => one.id);
+    const kinds = editor.getState().project.entities.map((one) => one.id);
+
+    // The two halves of the bug. Asking only what the level already holds
+    // hands back the kind's own name...
+    expect(nextId(copies, 'player')).toBe('player');
+    // ...and a project where a copy shadows a kind is refused outright.
+    editor.apply(edit.placeInstance('level-1', parsedInstance('player')));
+    expect(editor.getState().problem).toContain('tell them apart');
+    expect(editor.getState().project.scenes[0]?.entities).toHaveLength(1);
+
+    const taken = [...copies, ...kinds];
+    const id = nextInstanceId(taken, 'player');
+    expect(id).not.toBe('player');
+    expect(taken).not.toContain(id);
+
+    // And the store really accepts it, which is the thing that was failing.
+    editor.apply(edit.placeInstance('level-1', parsedInstance(id)));
+    expect(editor.getState().problem).toBeUndefined();
+    expect(editor.getState().project.scenes[0]?.entities).toHaveLength(2);
+  });
+
+  it('numbers copies from one, the way a project written by hand does', () => {
+    expect(nextInstanceId([], 'slime')).toBe('slime-1');
+    expect(nextInstanceId(['slime-1'], 'slime')).toBe('slime-2');
+    expect(nextInstanceId(['slime-1', 'slime-2'], 'slime')).toBe('slime-3');
+    // Even when a kind happens to be named like a numbered copy.
+    expect(nextInstanceId(['slime-1'], 'slime')).not.toBe('slime-1');
+  });
+});
