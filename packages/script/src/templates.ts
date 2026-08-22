@@ -227,6 +227,8 @@ export const ACTION_TEMPLATES: readonly Template[] = [
   }),
   template('go-to-scene', 'go to the level {scene:id}'),
   template('restart-scene', 'restart the level'),
+  template('pause-game', 'pause the game'),
+  template('resume-game', 'start the game again'),
   template('set-camera-target', 'make the camera follow {target:ref}'),
   template(
     'shake-camera',

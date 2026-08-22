@@ -418,6 +418,22 @@ Starts the current scene again from the beginning.
 then restart the level
 ```
 
+### Pause the game
+
+Freezes everything: nothing moves, no timers run, and only the player pressing a control is still heard, so a rule can start the game again.
+
+```
+then pause the game
+```
+
+### Start the game again
+
+Unfreezes a paused game and carries on exactly where it stopped.
+
+```
+then start the game again
+```
+
 ### Follow with the camera
 
 Points the camera at a different entity.

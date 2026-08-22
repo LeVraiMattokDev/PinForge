@@ -50,6 +50,7 @@ export class Game implements RuntimeHost {
    */
   private readonly disabledGlobalRules = new Set<string>();
   private readonly globalRuleIds: Set<string>;
+  private frozen = false;
   private pending: PendingActions[] = [];
   private accumulator = 0;
   private startedGame = false;
@@ -104,15 +105,21 @@ export class Game implements RuntimeHost {
     const sceneStarted = this.sceneStarting;
     this.startedGame = true;
     this.sceneStarting = false;
+    // A paused step still happens: real time is still handed in and still
+    // spent, so resuming carries on rather than bursting through a quarter
+    // second of caught-up simulation all at once.
+    const paused = this.frozen;
 
     for (const entity of world.entities) {
       entity.previousX = entity.x;
       entity.previousY = entity.y;
     }
 
+    // A rule part way through a wait keeps going while paused, which is what
+    // makes "pause, say something, wait, start again" a thing anyone can write.
     advancePending(this, STEP_SECONDS);
 
-    if (!this.changingScene) {
+    if (!this.changingScene && !paused) {
       for (const entity of world.entities) {
         if (!entity.destroyed) stepMovement(entity, world.map, this.input, STEP_SECONDS);
       }
@@ -127,14 +134,16 @@ export class Game implements RuntimeHost {
     this.variablesChangedThisStep = new Set();
     world.removeDestroyed();
 
-    this.updateCamera(STEP_SECONDS, false);
-    this.advanceAnimations(STEP_SECONDS);
-    if (world.message) {
-      world.message.secondsLeft -= STEP_SECONDS;
-      if (world.message.secondsLeft <= 0) world.message = undefined;
+    if (!paused) {
+      this.updateCamera(STEP_SECONDS, false);
+      this.advanceAnimations(STEP_SECONDS);
+      if (world.message) {
+        world.message.secondsLeft -= STEP_SECONDS;
+        if (world.message.secondsLeft <= 0) world.message = undefined;
+      }
+      world.elapsed += STEP_SECONDS;
+      world.steps += 1;
     }
-    world.elapsed += STEP_SECONDS;
-    world.steps += 1;
     this.input.endStep();
 
     if (this.nextSceneId !== undefined) {
@@ -174,6 +183,14 @@ export class Game implements RuntimeHost {
 
   restartScene(): void {
     this.nextSceneId = this.world.scene.id;
+  }
+
+  get paused(): boolean {
+    return this.frozen;
+  }
+
+  setPaused(paused: boolean): void {
+    this.frozen = paused;
   }
 
   destroy(entity: Entity): void {
@@ -226,6 +243,8 @@ export class Game implements RuntimeHost {
     // actions that needed them quietly do nothing instead of reaching into a
     // level that is gone.
     this.pending = this.pending.map((chain) => ({ ...chain, context: {} }));
+    // A level never opens frozen, whatever was happening in the one before it.
+    this.frozen = false;
     this.sceneStarting = true;
     this.destroyedThisStep = [];
     this.spawnedLastStep = [];

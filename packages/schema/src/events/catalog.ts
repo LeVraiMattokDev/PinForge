@@ -298,6 +298,19 @@ export const ACTIONS: Record<ActionType, CatalogEntry> = {
     modes: ANY_MODE,
     example: { type: 'restart-scene' },
   },
+  'pause-game': {
+    label: 'Pause the game',
+    summary:
+      'Freezes everything: nothing moves, no timers run, and only the player pressing a control is still heard, so a rule can start the game again.',
+    modes: ANY_MODE,
+    example: { type: 'pause-game' },
+  },
+  'resume-game': {
+    label: 'Start the game again',
+    summary: 'Unfreezes a paused game and carries on exactly where it stopped.',
+    modes: ANY_MODE,
+    example: { type: 'resume-game' },
+  },
   'set-camera-target': {
     label: 'Follow with the camera',
     summary: 'Points the camera at a different entity.',

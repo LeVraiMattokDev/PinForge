@@ -242,6 +242,10 @@ describe('every action the engine advertises does something', () => {
     'show-message': (game) => game.world.message?.text === 'You made it',
     'go-to-scene': (game) => game.world.scene.id === 'level-2',
     'restart-scene': (game) => game.world.steps <= 1,
+    'pause-game': (game) => game.paused,
+    // Nothing was paused, so starting the game again is a no-op that has to
+    // leave the game running rather than break anything.
+    'resume-game': (game) => !game.paused && game.world.steps > 0,
     'set-camera-target': (game) => game.world.camera.targetId === 'player-1',
     'shake-camera': (game) => game.world.camera.shakeLeft > 0,
     'set-tile': (game) => !game.world.map.isSolid(0, 5),

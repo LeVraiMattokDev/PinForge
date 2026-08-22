@@ -77,6 +77,8 @@ export const Action = z.discriminatedUnion('type', [
   }),
   z.strictObject({ type: z.literal('go-to-scene'), scene: Id }),
   z.strictObject({ type: z.literal('restart-scene') }),
+  z.strictObject({ type: z.literal('pause-game') }),
+  z.strictObject({ type: z.literal('resume-game') }),
   z.strictObject({ type: z.literal('set-camera-target'), target: EntityRef }),
   z.strictObject({
     type: z.literal('shake-camera'),

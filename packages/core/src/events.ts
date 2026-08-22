@@ -52,6 +52,9 @@ export interface RuntimeHost {
   readonly random: Random;
   readonly audio: AudioOutput;
   readonly changingScene: boolean;
+  /** True while the game is frozen. Only the player's own presses are heard. */
+  readonly paused: boolean;
+  setPaused(paused: boolean): void;
   variable(name: string): Value | undefined;
   setVariable(name: string, value: Value): void;
   prototype(id: string): EntityPrototype | undefined;
@@ -76,10 +79,19 @@ export function rulesOf(host: RuntimeHost): readonly EventRule[] {
  */
 const ABOUT_REMOVAL = new Set(['entity-destroyed', 'collision-ends']);
 
+/**
+ * While the game is paused nothing moves and no timer runs, so the only thing
+ * left to react to is the player. These are the triggers that still fire, which
+ * is what lets one rule start the game again — and what means every other rule
+ * in the game needs no "if the game is not paused" bolted onto it.
+ */
+const HEARD_WHILE_PAUSED = new Set(['action-pressed', 'action-released', 'clicked']);
+
 export function runRules(host: RuntimeHost, signals: StepSignals, seconds: number): void {
   for (const rule of rulesOf(host)) {
     if (host.changingScene) return;
     if (!rule.enabled || host.ruleDisabled(rule.id)) continue;
+    if (host.paused && !HEARD_WHILE_PAUSED.has(rule.when.type)) continue;
     if (rule.once && host.world.firedOnce.has(rule.id)) continue;
     const aboutRemoval = ABOUT_REMOVAL.has(rule.when.type);
     for (const context of firings(host, rule.when, signals, rule.id, seconds)) {
@@ -430,6 +442,12 @@ function perform(host: RuntimeHost, action: Action, context: RuleContext): void 
       return;
     case 'restart-scene':
       host.restartScene();
+      return;
+    case 'pause-game':
+      host.setPaused(true);
+      return;
+    case 'resume-game':
+      host.setPaused(false);
       return;
     case 'set-camera-target': {
       const target = resolve(world, action.target, context)[0];

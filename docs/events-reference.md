@@ -459,6 +459,26 @@ Starts the current scene again from the beginning.
 {"type":"restart-scene"}
 ```
 
+### Pause the game
+
+`pause-game`
+
+Freezes everything: nothing moves, no timers run, and only the player pressing a control is still heard, so a rule can start the game again.
+
+```json
+{"type":"pause-game"}
+```
+
+### Start the game again
+
+`resume-game`
+
+Unfreezes a paused game and carries on exactly where it stopped.
+
+```json
+{"type":"resume-game"}
+```
+
 ### Follow with the camera
 
 `set-camera-target`

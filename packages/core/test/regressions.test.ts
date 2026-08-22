@@ -613,3 +613,182 @@ describe('placing something next to something else', () => {
     expect(coin?.y).toBe(16);
   });
 });
+
+/**
+ * Pausing. The editor tells people that pausing belongs in the rules for the
+ * whole game, the getting started guide and the format reference both name it,
+ * and the format ships a pause key bound to escape by default — and until now
+ * there was no way to pause anything.
+ */
+describe('pausing', () => {
+  const pausable = (events: NonNullable<WorldOptions['events']>) =>
+    makeGame({
+      variables: [{ id: 'score', type: 'number', initial: 0 }],
+      events,
+    });
+
+  it('freezes what moves and stops the timers', () => {
+    const game = pausable([
+      {
+        id: 'pause',
+        when: { type: 'action-pressed', action: 'pause' },
+        then: [{ type: 'pause-game' }],
+      },
+      {
+        id: 'ticking',
+        when: { type: 'every-frame' },
+        then: [{ type: 'change-variable', variable: 'score', value: 1 }],
+      },
+    ]);
+
+    steps(game, 20);
+    expect(Number(game.variable('score'))).toBeGreaterThan(0);
+
+    // The step the press lands in has already moved things by the time the
+    // rules run, so it finishes; the freeze holds from the next step on.
+    game.input.press('pause');
+    game.step();
+    expect(game.paused).toBe(true);
+
+    const frozenY = player(game).y;
+    const frozenScore = game.variable('score');
+    const frozenSteps = game.world.steps;
+    steps(game, 60);
+
+    // Nothing moved, nothing ticked, and the clock did not advance.
+    expect(player(game).y).toBe(frozenY);
+    expect(game.variable('score')).toBe(frozenScore);
+    expect(game.world.steps).toBe(frozenSteps);
+  });
+
+  it('still hears the player, so a rule can start the game again', () => {
+    const game = pausable([
+      {
+        id: 'pause',
+        when: { type: 'action-pressed', action: 'pause' },
+        then: [{ type: 'pause-game' }],
+      },
+      {
+        id: 'unpause',
+        when: { type: 'action-released', action: 'pause' },
+        then: [{ type: 'resume-game' }],
+      },
+      {
+        id: 'ticking',
+        when: { type: 'every-frame' },
+        then: [{ type: 'change-variable', variable: 'score', value: 1 }],
+      },
+    ]);
+
+    steps(game, 5);
+    game.input.press('pause');
+    steps(game, 30);
+    expect(game.paused).toBe(true);
+    const held = game.variable('score');
+
+    game.input.release('pause');
+    steps(game, 10);
+
+    expect(game.paused).toBe(false);
+    expect(Number(game.variable('score'))).toBeGreaterThan(Number(held));
+  });
+
+  it('freezes a player who is holding a direction down', () => {
+    // The whole point of doing this in the engine: a rule cannot stop a
+    // player-controlled entity from reading the keyboard, so a pause built out
+    // of rules leaves the player walking around a frozen world.
+    const game = pausable([
+      {
+        id: 'pause',
+        when: { type: 'action-pressed', action: 'pause' },
+        then: [{ type: 'pause-game' }],
+      },
+    ]);
+
+    steps(game, 30);
+    game.input.press('right');
+    steps(game, 10);
+    const movedTo = player(game).x;
+    expect(movedTo).toBeGreaterThan(32);
+
+    game.input.press('pause');
+    game.step();
+    const frozenX = player(game).x;
+    steps(game, 60);
+
+    expect(game.paused).toBe(true);
+    expect(player(game).x).toBe(frozenX);
+    // And it really was still walking when the pause landed.
+    expect(frozenX).toBeGreaterThan(movedTo);
+  });
+
+  it('lets a rule part way through a wait carry on, so a cutscene works', () => {
+    const game = pausable([
+      {
+        id: 'cutscene',
+        when: { type: 'scene-starts' },
+        then: [
+          { type: 'pause-game' },
+          { type: 'show-message', text: 'Look out!', seconds: 1 },
+          { type: 'wait', seconds: 0.5 },
+          { type: 'resume-game' },
+        ],
+      },
+      {
+        id: 'ticking',
+        when: { type: 'every-frame' },
+        then: [{ type: 'change-variable', variable: 'score', value: 1 }],
+      },
+    ]);
+
+    game.step();
+    expect(game.paused).toBe(true);
+    const held = game.variable('score');
+    steps(game, 20);
+    // Frozen: the every-frame rule did not run while the pause held.
+    expect(game.variable('score')).toBe(held);
+
+    steps(game, 30);
+    expect(game.paused).toBe(false);
+    expect(Number(game.variable('score'))).toBeGreaterThan(Number(held));
+  });
+
+  it('never opens a new level frozen', () => {
+    const game = makeGame({
+      variables: [{ id: 'score', type: 'number', initial: 0 }],
+      scenes: [1, 2].map((number) => ({
+        id: `level-${number}`,
+        tileSize: 16,
+        size: { columns: 10, rows: 6 },
+        layers: [
+          {
+            id: 'ground',
+            tileset: 'ground',
+            collides: true,
+            legend: { '.': null, '#': 0 },
+            rows: FLOOR_ROWS,
+          },
+        ],
+        entities: [{ id: `player-${number}`, prototype: 'player', x: 32, y: 0 }],
+        camera: { mode: 'fixed' as const },
+        events:
+          number === 1
+            ? [
+                {
+                  id: 'freeze',
+                  when: { type: 'scene-starts' as const },
+                  then: [{ type: 'pause-game' as const }],
+                },
+              ]
+            : [],
+      })),
+    });
+
+    game.step();
+    expect(game.paused).toBe(true);
+    game.goToScene('level-2');
+    steps(game, 3);
+
+    expect(game.paused).toBe(false);
+  });
+});
