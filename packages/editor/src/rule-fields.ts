@@ -18,7 +18,8 @@ export type FieldKind =
   | 'entity-tag'
   | 'tile-tag'
   | 'value'
-  | 'tile';
+  | 'tile'
+  | 'property';
 
 export interface FieldSpec {
   readonly name: string;
@@ -77,7 +78,11 @@ const WORDS: Record<string, { label: string; hint?: string; kind?: FieldKind }> 
   row: { label: 'Row' },
   width: { label: 'Width' },
   visible: { label: 'Show it' },
-  property: { label: 'Property' },
+  property: {
+    label: 'Property',
+    kind: 'property',
+    hint: 'The name of a custom property on that entity, like hits-left.',
+  },
   x: { label: 'Across', hint: 'Pixels from the left. Sixteen pixels is one tile.' },
   y: { label: 'Down', hint: 'Pixels from the top. Down is positive.' },
   negate: {

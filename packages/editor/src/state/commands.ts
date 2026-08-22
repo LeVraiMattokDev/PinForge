@@ -378,6 +378,26 @@ export function removeRule(id: string, sceneId: string | undefined): Command {
   );
 }
 
+/** Changes several rules in one undoable step, as when a block moves between two. */
+export function updateRules(rules: readonly EventRule[], sceneId: string | undefined): Command {
+  const change = (existing: readonly EventRule[]): EventRule[] =>
+    rules.reduce((list, rule) => replaceIn(list, rule), [...existing]);
+  return command('Move a block', (project) =>
+    sceneId === undefined
+      ? { ...project, globalEvents: change(project.globalEvents) }
+      : withScene(project, sceneId, (scene) => ({ ...scene, events: change(scene.events) })),
+  );
+}
+
+/** Replaces every rule at once, which is what applying a script does. */
+export function setRules(rules: readonly EventRule[], sceneId: string | undefined): Command {
+  return command('Rewrite the rules', (project) =>
+    sceneId === undefined
+      ? { ...project, globalEvents: [...rules] }
+      : withScene(project, sceneId, (scene) => ({ ...scene, events: [...rules] })),
+  );
+}
+
 export function moveRule(id: string, sceneId: string | undefined, by: number): Command {
   return command('Reorder the rules', (project) => {
     const reorder = (rules: readonly EventRule[]): EventRule[] => {
