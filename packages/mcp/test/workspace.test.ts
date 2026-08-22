@@ -209,6 +209,20 @@ describe('mutations', () => {
     expect(html).toContain('"maxSpeed":150');
     expect(html).not.toMatch(/https?:\/\//);
   });
+
+  it('lays out a desktop build of the game as it stands', () => {
+    const out = join(workspace, 'desktop');
+    tools.modifyEntity('player', { components: { movement: { maxSpeed: 175 } } });
+
+    const said = tools.desktopBuild(out);
+    expect(said).toContain('cargo build --release');
+    expect(said).toContain('11 files');
+    // The layout is of the current game, not of whatever was last saved.
+    expect(readFileSync(join(out, 'dist', 'index.html'), 'utf8')).toContain('"maxSpeed":175');
+    expect(readFileSync(join(out, 'src-tauri', 'tauri.conf.json'), 'utf8')).toContain(
+      '"frontendDist": "../dist"',
+    );
+  });
 });
 
 describe('the diff', () => {

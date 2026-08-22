@@ -160,6 +160,32 @@ One file. The pictures and sounds are inside it, so there is nothing else to
 upload and nothing to configure. Send it, put it on a web page, open it from a
 memory stick.
 
+### Or a program people double click
+
+A web page is not what everyone means by a game. To get one runnable file — a
+`.exe` on Windows, a plain program on macOS and Linux:
+
+```bash
+node packages/cli/dist/main.js desktop my-game.pinforge.json
+```
+
+That writes a folder, and the folder tells you the one command that turns it
+into the program:
+
+```bash
+cd my-game-desktop/src-tauri
+cargo build --release
+```
+
+You need [Rust](https://rustup.rs) installed for that step, once, and the
+program has to be built on the kind of computer it is for: a Windows `.exe` is
+built on Windows. What comes out is about three megabytes, because it borrows
+the web view the operating system already has instead of carrying a browser
+along. It plays exactly the same game as the HTML file — same file inside, same
+runtime, same rules.
+
+See [desktop builds](desktop.md) for the whole story, installers included.
+
 ## When something is wrong
 
 The editor refuses changes that would break the game and says why, at the top of

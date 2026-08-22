@@ -237,5 +237,16 @@ export function createServer(workspace = new Workspace()): McpServer {
     ({ out }) => text(workspace.exportGame(out)),
   );
 
+  server.registerTool(
+    'desktop_project',
+    {
+      title: 'Lay out a desktop build',
+      description:
+        'Writes a folder that builds the game into one executable people double click, .exe on Windows. Turning it into the executable is one Rust command, run by hand on the system it is for.',
+      inputSchema: { out: z.string().optional() },
+    },
+    ({ out }) => text(workspace.desktopBuild(out)),
+  );
+
   return server;
 }

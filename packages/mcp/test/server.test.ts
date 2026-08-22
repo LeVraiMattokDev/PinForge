@@ -31,6 +31,7 @@ describe('the MCP server', () => {
       'create_project',
       'create_scene',
       'describe_project',
+      'desktop_project',
       'export_project',
       'list_rule_types',
       'modify_entity',

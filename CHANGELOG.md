@@ -54,7 +54,7 @@ project file changes, and every change comes with a migration.
   - Autosave to the browser, plus explicit save and load of the game file.
   - A rule's form is generated from the Zod schema, so the vocabulary can grow
     without the editor changing.
-- `@pinforge/mcp`, a Model Context Protocol server with eighteen tools covering
+- `@pinforge/mcp`, a Model Context Protocol server with nineteen tools covering
   opening and creating projects, reading levels, creating and changing entities,
   painting tile regions, adding and removing rules, validating and exporting.
   Tool inputs are the project's own Zod definitions, every mutation validates
@@ -141,6 +141,16 @@ player`, and the same for right, above and below. Paired with setting a
   player reads at their own pace.
 - A calm banner for when something worked and there is a next step worth naming,
   alongside the red one for a change that was refused. Only ever one at a time.
+- `pinforge desktop <game>`: a game as one executable people double click, `.exe`
+  on Windows. It lays out a Tauri project around the single HTML file the browser
+  export already writes — the identical file, asserted byte for byte, so one
+  runtime serves both — with the window sized as play mode sizes it, an icon
+  drawn on the spot, and a README naming the one Rust command per platform. Tauri
+  rather than Electron because the result is three megabytes borrowing the
+  system's web view instead of a hundred and fifty carrying a browser. The Rust
+  step stays a separate command on purpose: it needs a compiler, and it has to
+  run on the system being built for. The MCP server has it too, as
+  `desktop_project`.
 
 ### Changed
 

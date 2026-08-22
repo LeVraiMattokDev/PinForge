@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { buildHtml, create, inlineAssets, readRuntimeBundle } from '@pinforge/cli';
+import { buildHtml, create, inlineAssets, readRuntimeBundle, scaffoldDesktop } from '@pinforge/cli';
 import { ACTIONS, CONDITIONS, TRIGGERS, type CatalogEntry } from '@pinforge/schema';
 import { describeChanges, type Change } from './diff.js';
 import { ProjectSession, isObject, listIn, sceneIn, type JsonObject } from './session.js';
@@ -286,6 +286,18 @@ export class Workspace {
     const file = resolve(process.cwd(), out);
     writeFileSync(file, html);
     return `Exported to ${file} (${(html.length / 1024).toFixed(0)} kB), one file with nothing else to upload.`;
+  }
+
+  desktopBuild(out: string | undefined): string {
+    // Every change is written to the file as it is made, so the layout is of
+    // the game as it stands, with nothing to save first.
+    const laid = scaffoldDesktop(this.need().file, out);
+    return [
+      `Laid out ${laid.name} for the desktop in ${laid.directory} (${laid.files.length} files).`,
+      `Building it needs Rust: cd ${laid.directory}/src-tauri && cargo build --release`,
+      'That step has to run on the kind of computer the program is for, so a',
+      'Windows .exe is built on Windows. See the README it wrote.',
+    ].join('\n');
   }
 
   report(changes: readonly Change[]): string {

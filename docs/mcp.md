@@ -51,6 +51,7 @@ server can move between games in a conversation.
 | `add_variable` | Adds something the game remembers. |
 | `add_asset` | Names a picture or a sound the game can use. |
 | `export_project` | Writes one HTML file with everything inlined. |
+| `desktop_project` | Lays out a desktop build: one executable, after one Rust command. |
 
 ## The two guarantees
 

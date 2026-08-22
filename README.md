@@ -33,6 +33,9 @@ creation, peer learning and free software.
 - **Movement that feels right by default.** Coyote time, jump buffering and
   asymmetric gravity are on, tuned, and invisible unless you go looking.
 - **Export to one HTML file** you can put anywhere.
+- **Or to a program people double click** — one executable of about three
+  megabytes, `.exe` on Windows, built with one Rust command from the folder
+  PinForge lays out. Same file inside, same runtime.
 - **An MCP server**, so an assistant can build and edit a game with you through
   the same file format and the same validation the editor uses.
 
@@ -44,7 +47,8 @@ gets on with being a game engine.
 
 All six phases are done: the project format, the runtime, a playable example
 game written by hand, the visual editor, the command line, export to a single
-HTML file, both movement modes, and authoring over the Model Context Protocol.
+HTML file or to a desktop executable, both movement modes, and authoring over
+the Model Context Protocol.
 The format came first because it is the contract every other package agrees on.
 
 | Phase | What                                                                 | State |
@@ -53,7 +57,7 @@ The format came first because it is the contract every other package agrees on.
 | 1     | `packages/core`: fixed timestep runtime, collision, movement, events | done  |
 | 2     | `examples/first-game` written by hand, plus the CLI to run it        | done  |
 | 3     | `packages/editor`: the visual editor                                 | done  |
-| 4     | Export to standalone HTML, free movement, auto scrolling camera      | done  |
+| 4     | Export to standalone HTML and to the desktop, free movement, camera  | done  |
 | 5     | `packages/mcp`: authoring over the Model Context Protocol            | done  |
 
 ```bash
@@ -76,6 +80,9 @@ node packages/cli/dist/main.js new my-game --name "My game"
 
 # Ship it as one HTML file with nothing else to upload
 node packages/cli/dist/main.js export my-game --out my-game.html
+
+# Or as a program people double click, built with one Rust command
+node packages/cli/dist/main.js desktop my-game
 ```
 
 See [getting started](docs/getting-started.md) for the walkthrough.
@@ -92,6 +99,8 @@ See [getting started](docs/getting-started.md) for the walkthrough.
   action, with an example each.
 - [Writing rules as text](docs/script.md) — PinScript, every rule as a sentence
   you can type, with every phrase listed.
+- [Desktop builds](docs/desktop.md) — turning a game into one executable, and
+  what that costs.
 - [Architecture](docs/architecture.md) — package boundaries and the decisions
   behind them, for contributors.
 - [The MCP server](docs/mcp.md) — building a game with an assistant.

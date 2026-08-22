@@ -2,6 +2,7 @@
 import { parseArgs } from 'node:util';
 import { create } from './commands/create.js';
 import { exportGame } from './commands/export.js';
+import { scaffoldDesktop } from './commands/desktop.js';
 import { rules } from './commands/rules.js';
 import { run } from './commands/run.js';
 import { validate } from './commands/validate.js';
@@ -13,6 +14,7 @@ const HELP = `pinforge - make and play 2D games
   pinforge export <game> [--out game.html]   write one HTML file you can share
   pinforge validate <game>                   check the game file and say what is wrong
   pinforge rules <game>                      write every rule as PinScript sentences
+  pinforge desktop <game> [--out <folder>]   lay out a desktop build you compile with Rust
 
 <game> is a game.pinforge.json file, or the folder holding one.
 `;
@@ -63,6 +65,20 @@ async function main(argv: string[]): Promise<number> {
     case 'rules':
       say(rules(need(target, 'Which game should be written out?')));
       return 0;
+    case 'desktop': {
+      const laid = scaffoldDesktop(
+        need(target, 'Which game should be built for the desktop?'),
+        values.out,
+      );
+      say(
+        `${laid.name} laid out for the desktop in ${laid.directory} (${laid.files.length} files).`,
+      );
+      say(
+        `Next, with Rust installed:\n  cd ${laid.directory}/src-tauri && cargo build --release\n` +
+          `That gives you one runnable file. See ${laid.directory}/README.md for each platform.`,
+      );
+      return 0;
+    }
     default:
       process.stderr.write(`There is no command called "${command}".\n\n${HELP}`);
       return 1;

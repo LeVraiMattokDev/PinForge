@@ -9,3 +9,5 @@ export { run } from './commands/run.js';
 export type { RunningGame } from './commands/run.js';
 export { create } from './commands/create.js';
 export { rules } from './commands/rules.js';
+export { scaffoldDesktop, crateName, windowSize } from './commands/desktop.js';
+export type { DesktopScaffold } from './commands/desktop.js';
