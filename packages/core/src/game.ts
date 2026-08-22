@@ -217,7 +217,15 @@ export class Game implements RuntimeHost {
     const scene = this.scenes.get(id);
     if (!scene) return;
     this.world = new World(scene, this.project);
-    this.pending = [];
+    // A wait does not belong to the level it started in. "Say something, wait,
+    // then put things right" has to finish even when something else changes the
+    // level while it waits, or "the rest of this rule runs" is only true while
+    // nothing interesting happens. What cannot come along are the entities the
+    // rule was about: they belonged to the level just left, so the rest of the
+    // chain carries on with nothing for $self and $other to point at, and the
+    // actions that needed them quietly do nothing instead of reaching into a
+    // level that is gone.
+    this.pending = this.pending.map((chain) => ({ ...chain, context: {} }));
     this.sceneStarting = true;
     this.destroyedThisStep = [];
     this.spawnedLastStep = [];

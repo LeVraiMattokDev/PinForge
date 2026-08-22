@@ -341,10 +341,13 @@ function perform(host: RuntimeHost, action: Action, context: RuleContext): void 
     case 'spawn': {
       const prototype = host.prototype(action.entity);
       if (!prototype) return;
-      const anchor = action.relativeTo ? resolve(world, action.relativeTo, context)[0] : undefined;
-      const originX = anchor?.x ?? 0;
-      const originY = anchor?.y ?? 0;
-      world.spawn(prototype, originX + action.x, originY + action.y);
+      // No anchor named means the top left of the level, which is what the
+      // field says. An anchor named that points at nothing is a different
+      // thing entirely, and putting the new entity in the corner of the level
+      // instead is a wrong answer given quietly: nothing is the right one.
+      const origin = originOf(world, action.relativeTo, context);
+      if (!origin) return;
+      world.spawn(prototype, origin.x + action.x, origin.y + action.y);
       return;
     }
     case 'move':
@@ -358,10 +361,11 @@ function perform(host: RuntimeHost, action: Action, context: RuleContext): void 
       }
       return;
     case 'teleport': {
-      const anchor = action.relativeTo ? resolve(world, action.relativeTo, context)[0] : undefined;
+      const origin = originOf(world, action.relativeTo, context);
+      if (!origin) return;
       for (const entity of resolve(world, action.target, context)) {
-        entity.x = (anchor?.x ?? 0) + action.x;
-        entity.y = (anchor?.y ?? 0) + action.y;
+        entity.x = origin.x + action.x;
+        entity.y = origin.y + action.y;
         entity.previousX = entity.x;
         entity.previousY = entity.y;
       }
@@ -448,6 +452,21 @@ function perform(host: RuntimeHost, action: Action, context: RuleContext): void 
     case 'wait':
       return;
   }
+}
+
+/**
+ * Where a position is measured from. Nothing named means the top left of the
+ * level; something named that no longer points at anything means the action has
+ * no position to work with at all, and undefined says so.
+ */
+function originOf(
+  world: World,
+  relativeTo: string | undefined,
+  context: RuleContext,
+): { x: number; y: number } | undefined {
+  if (relativeTo === undefined) return { x: 0, y: 0 };
+  const anchor = resolve(world, relativeTo, context)[0];
+  return anchor ? { x: anchor.x, y: anchor.y } : undefined;
 }
 
 function apply(current: number, operator: Arithmetic, value: number): number {

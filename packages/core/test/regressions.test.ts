@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ProjectInput } from '@pinforge/schema';
-import { FLOOR_ROWS, makeGame, player, steps, stepUntil } from './helpers.js';
+import { FLOOR_ROWS, makeGame, player, steps, stepUntil, type WorldOptions } from './helpers.js';
 
 /**
  * One test per bug that has been fixed, so none of them can come back. Each
@@ -443,5 +443,173 @@ describe('leaving the level', () => {
     entity.velocityY = 0;
     steps(game, 120);
     expect(game.variable('lives')).toBe(1);
+  });
+});
+
+describe('waiting, when the level changes underneath', () => {
+  /** Two levels, so something can change the level while a rule is waiting. */
+  const rooms = (events: NonNullable<WorldOptions['events']>) =>
+    [1, 2].map((number) => ({
+      id: `level-${number}`,
+      tileSize: 16,
+      size: { columns: 10, rows: 6 },
+      layers: [
+        {
+          id: 'ground',
+          tileset: 'ground',
+          collides: true,
+          legend: { '.': null, '#': 0 },
+          rows: FLOOR_ROWS,
+        },
+      ],
+      entities: [{ id: `player-${number}`, prototype: 'player', x: 32, y: 64 }],
+      camera: { mode: 'fixed' as const },
+      events: number === 1 ? events : [],
+    }));
+
+  it('finishes the rest of the rule even so', () => {
+    // The wrong behaviour: changing the level threw away every rule that was
+    // part way through a wait, from any rule, without a word. So the shape the
+    // documentation itself teaches for losing a game — say something, wait,
+    // then put the score and the lives back — silently did nothing whenever
+    // anything else changed the level inside that pause.
+    const game = makeGame({
+      variables: [{ id: 'hearts', type: 'number', initial: 0 }],
+      scenes: rooms([
+        {
+          id: 'game-over',
+          when: { type: 'scene-starts' },
+          then: [
+            { type: 'show-message', text: 'You ran out of hearts', seconds: 3 },
+            { type: 'wait', seconds: 1 },
+            { type: 'set-variable', variable: 'hearts', value: 3 },
+          ],
+        },
+      ]),
+    });
+
+    game.step();
+    expect(game.variable('hearts')).toBe(0);
+    game.goToScene('level-2');
+    steps(game, 120);
+
+    expect(game.world.scene.id).toBe('level-2');
+    expect(game.variable('hearts')).toBe(3);
+  });
+
+  it('lets go of the entities it was about, rather than reaching into the level it left', () => {
+    const game = makeGame({
+      variables: [{ id: 'hearts', type: 'number', initial: 0 }],
+      prototypes: [
+        {
+          id: 'player',
+          size: { width: 12, height: 16 },
+          tags: ['player'],
+          components: { collider: {}, movement: { mode: 'platform' } },
+        },
+        {
+          id: 'coin',
+          size: { width: 8, height: 8 },
+          tags: ['pickup'],
+          components: { collider: { kind: 'trigger' } },
+        },
+      ],
+      scenes: rooms([
+        {
+          id: 'late-spawn',
+          when: { type: 'scene-starts' },
+          then: [
+            { type: 'wait', seconds: 0.2 },
+            // $self means nothing here, so this must land nowhere rather than
+            // at a position measured in a level that no longer exists.
+            { type: 'spawn', entity: 'coin', x: 0, y: 0, relativeTo: '$self' },
+            { type: 'set-variable', variable: 'hearts', value: 3 },
+          ],
+        },
+      ]),
+    });
+
+    game.step();
+    game.goToScene('level-2');
+    steps(game, 60);
+
+    // The rest of the rule ran...
+    expect(game.variable('hearts')).toBe(3);
+    // ...and the action that needed an entity quietly did nothing.
+    expect(game.world.entities.filter((one) => one.prototypeId === 'coin')).toHaveLength(0);
+  });
+});
+
+describe('placing something next to something else', () => {
+  it('places nothing when the thing to place it next to is not there', () => {
+    // The wrong behaviour: an anchor that pointed at nothing fell back to the
+    // top left of the level, so a rule meant to drop treasure beside the boss
+    // dropped it in the corner instead, with nothing said.
+    const game = makeGame({
+      prototypes: [
+        {
+          id: 'player',
+          size: { width: 12, height: 16 },
+          tags: ['player'],
+          components: { collider: {}, movement: { mode: 'platform' } },
+        },
+        {
+          id: 'boss',
+          size: { width: 16, height: 16 },
+          tags: ['enemy'],
+          components: { collider: { kind: 'trigger' } },
+        },
+        {
+          id: 'coin',
+          size: { width: 8, height: 8 },
+          tags: ['pickup'],
+          components: { collider: { kind: 'trigger' } },
+        },
+      ],
+      // No boss anywhere in this level.
+      entities: [{ id: 'player-1', prototype: 'player', x: 32, y: 64 }],
+      events: [
+        {
+          id: 'treasure',
+          when: { type: 'scene-starts' },
+          then: [{ type: 'spawn', entity: 'coin', x: 0, y: -8, relativeTo: 'boss' }],
+        },
+      ],
+    });
+    steps(game, 3);
+
+    expect(game.world.entities.filter((one) => one.prototypeId === 'coin')).toHaveLength(0);
+  });
+
+  it('still means the top left of the level when nothing is named', () => {
+    const game = makeGame({
+      prototypes: [
+        {
+          id: 'player',
+          size: { width: 12, height: 16 },
+          tags: ['player'],
+          components: { collider: {}, movement: { mode: 'platform' } },
+        },
+        {
+          id: 'coin',
+          size: { width: 8, height: 8 },
+          tags: ['pickup'],
+          components: { collider: { kind: 'trigger' } },
+        },
+      ],
+      entities: [{ id: 'player-1', prototype: 'player', x: 32, y: 64 }],
+      events: [
+        {
+          id: 'treasure',
+          when: { type: 'scene-starts' },
+          then: [{ type: 'spawn', entity: 'coin', x: 24, y: 16 }],
+        },
+      ],
+    });
+    steps(game, 3);
+
+    const coin = game.world.entities.find((one) => one.prototypeId === 'coin');
+    expect(coin?.x).toBe(24);
+    expect(coin?.y).toBe(16);
   });
 });
