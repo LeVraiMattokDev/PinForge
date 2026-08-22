@@ -10,6 +10,7 @@ import {
   inlineAssets,
   openProject,
   readRuntimeBundle,
+  rules,
   validate,
 } from '../src/index.js';
 
@@ -109,6 +110,27 @@ describe('starting a new game', () => {
     const directory = join(workspace, 'my-game');
 
     expect(() => create(directory, undefined)).toThrow(/already a game/);
+  });
+});
+
+describe('writing the rules out', () => {
+  it('writes the example game as PinScript sentences', () => {
+    const text = rules(EXAMPLE);
+
+    expect(text).toContain('# Rules for the level');
+    expect(text).toContain('when ');
+    expect(text).toContain('then ');
+  });
+
+  it('says so when a game has no rules yet', () => {
+    const directory = join(workspace, 'no-rules');
+    create(directory, 'Quiet game');
+    const project = JSON.parse(readFileSync(join(directory, 'game.pinforge.json'), 'utf8'));
+    project.globalEvents = [];
+    for (const scene of project.scenes) scene.events = [];
+    writeFileSync(join(directory, 'game.pinforge.json'), JSON.stringify(project));
+
+    expect(rules(directory)).toContain('no rules yet');
   });
 });
 

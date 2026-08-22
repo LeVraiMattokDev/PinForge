@@ -8,3 +8,4 @@ export type { ExportedGame } from './commands/export.js';
 export { run } from './commands/run.js';
 export type { RunningGame } from './commands/run.js';
 export { create } from './commands/create.js';
+export { rules } from './commands/rules.js';

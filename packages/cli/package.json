@@ -27,7 +27,8 @@
   },
   "dependencies": {
     "@pinforge/core": "workspace:*",
-    "@pinforge/schema": "workspace:*"
+    "@pinforge/schema": "workspace:*",
+    "@pinforge/script": "workspace:*"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"

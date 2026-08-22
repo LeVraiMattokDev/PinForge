@@ -2,6 +2,7 @@
 import { parseArgs } from 'node:util';
 import { create } from './commands/create.js';
 import { exportGame } from './commands/export.js';
+import { rules } from './commands/rules.js';
 import { run } from './commands/run.js';
 import { validate } from './commands/validate.js';
 
@@ -11,6 +12,7 @@ const HELP = `pinforge - make and play 2D games
   pinforge run <game> [--port 4321]          play it in your browser
   pinforge export <game> [--out game.html]   write one HTML file you can share
   pinforge validate <game>                   check the game file and say what is wrong
+  pinforge rules <game>                      write every rule as PinScript sentences
 
 <game> is a game.pinforge.json file, or the folder holding one.
 `;
@@ -57,6 +59,9 @@ async function main(argv: string[]): Promise<number> {
     }
     case 'validate':
       say(validate(need(target, 'Which game should be checked?')));
+      return 0;
+    case 'rules':
+      say(rules(need(target, 'Which game should be written out?')));
       return 0;
     default:
       process.stderr.write(`There is no command called "${command}".\n\n${HELP}`);

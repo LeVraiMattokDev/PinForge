@@ -33,6 +33,9 @@ importers:
       '@pinforge/schema':
         specifier: workspace:*
         version: link:../schema
+      '@pinforge/script':
+        specifier: workspace:*
+        version: link:../script
     devDependencies:
       esbuild:
         specifier: ^0.28.2
@@ -52,6 +55,9 @@ importers:
       '@pinforge/schema':
         specifier: workspace:*
         version: link:../schema
+      '@pinforge/script':
+        specifier: workspace:*
+        version: link:../script
       react:
         specifier: ^19.1.0
         version: 19.2.8
@@ -99,6 +105,12 @@ importers:
       tsx:
         specifier: ^4.19.3
         version: 4.23.12
+
+  packages/script:
+    dependencies:
+      '@pinforge/schema':
+        specifier: workspace:*
+        version: link:../schema
 
 packages:
 

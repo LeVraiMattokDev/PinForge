@@ -1,0 +1,26 @@
+{
+  "name": "@pinforge/script",
+  "version": "0.0.0",
+  "description": "PinScript: the PinForge rules written as plain sentences, parsed and printed without loss.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tools.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pinforge/schema": "workspace:*"
+  }
+}
