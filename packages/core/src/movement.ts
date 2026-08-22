@@ -101,7 +101,11 @@ function stepPlatform(
   if (direction !== 0) entity.facing = direction > 0 ? 1 : -1;
 
   if (byPlayer) {
-    if (input.wasPressed('jump')) entity.jumpBufferLeft = movement.jumpBufferTime;
+    if (input.wasPressed('jump')) {
+      // The press itself always counts for this step; the buffer time only
+      // decides how long it keeps counting afterwards.
+      entity.jumpBufferLeft = Math.max(movement.jumpBufferTime, seconds);
+    }
     if (
       input.wasReleased('jump') &&
       movement.variableJumpHeight &&
@@ -113,13 +117,12 @@ function stepPlatform(
       entity.jumpCut = true;
     }
   }
-  entity.jumpBufferLeft = Math.max(0, entity.jumpBufferLeft - seconds);
 
   const fromGround = entity.onGround || entity.coyoteLeft > 0;
   if (
     entity.jumpBufferLeft > 0 &&
     movement.jumpHeight > 0 &&
-    (fromGround || entity.airJumpsLeft > 0)
+    (fromGround ? movement.jumpCount > 0 : entity.airJumpsLeft > 0)
   ) {
     if (!fromGround) entity.airJumpsLeft -= 1;
     // A jump is authored as a height in pixels; the impulse comes from it.
@@ -130,6 +133,7 @@ function stepPlatform(
     entity.jumped = true;
     entity.jumpCut = false;
   }
+  entity.jumpBufferLeft = Math.max(0, entity.jumpBufferLeft - seconds);
 
   // Falling is heavier than rising, which is most of why a jump feels solid.
   const scale = entity.velocityY > 0 ? movement.fallGravityMultiplier : 1;
@@ -146,7 +150,10 @@ function stepPlatform(
   const vertical = moveOnY(entity, entity.velocityY * seconds, map, collide);
   if (vertical.below || vertical.above) entity.velocityY = 0;
 
-  entity.onGround = collide && (vertical.below || standingOn(entity, map));
+  // Rising is never standing: without this, feet passing up through a one-way
+  // platform would count as a landing in mid air.
+  entity.onGround =
+    collide && (vertical.below || (entity.velocityY >= 0 && standingOn(entity, map)));
   if (entity.onGround && !wasOnGround) entity.landed = true;
   if (entity.onGround) {
     entity.coyoteLeft = movement.coyoteTime;

@@ -76,7 +76,9 @@ export class Game implements RuntimeHost {
 
   /** Feeds real time in. Runs as many fixed steps as have become due. */
   advance(seconds: number): void {
-    this.accumulator += Math.min(seconds, MAX_CATCH_UP);
+    // Clamped on both sides: a huge frame time must not spiral, and a clock
+    // that runs backwards must not drain the accumulator below zero.
+    this.accumulator += Math.min(Math.max(seconds, 0), MAX_CATCH_UP);
     while (this.accumulator >= STEP_SECONDS) {
       this.accumulator -= STEP_SECONDS;
       this.step();
@@ -249,8 +251,10 @@ export class Game implements RuntimeHost {
       for (let index = world.entities.length - 1; index >= 0; index -= 1) {
         const entity = world.entities[index];
         if (!entity || entity.destroyed || !entity.visible) continue;
-        const x = entity.fixedToCamera ? point.x : point.x + world.camera.x;
-        const y = entity.fixedToCamera ? point.y : point.y + world.camera.y;
+        // The renderer offsets by the shake as well, so clicking maps back
+        // through the same total offset or a shaking screen misses.
+        const x = entity.fixedToCamera ? point.x : point.x + world.camera.x + world.camera.offsetX;
+        const y = entity.fixedToCamera ? point.y : point.y + world.camera.y + world.camera.offsetY;
         if (
           x >= entity.x &&
           x <= entity.x + entity.width &&

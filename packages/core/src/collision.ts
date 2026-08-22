@@ -116,11 +116,15 @@ export function moveOnY(
 
 /** Whether something solid holds this box up right now. */
 export function standingOn(body: Box, map: Tilemap): boolean {
-  const row = Math.floor((body.y + body.height + 0.5) / map.tileSize);
+  const feet = body.y + body.height;
+  const row = Math.floor((feet + 0.5) / map.tileSize);
   const left = Math.floor(body.x / map.tileSize);
   const right = Math.floor((body.x + body.width - EPSILON) / map.tileSize);
   for (let column = left; column <= right; column += 1) {
-    if (map.isSolid(column, row) || map.isOneWay(column, row)) return true;
+    if (map.isSolid(column, row)) return true;
+    // A one-way tile only holds something whose feet rest on its top edge,
+    // never something passing up through it.
+    if (map.isOneWay(column, row) && feet <= row * map.tileSize + EPSILON) return true;
   }
   return false;
 }

@@ -107,10 +107,14 @@ function* firings(
       yield {};
       return;
     case 'every-seconds': {
+      // An interval below one step would owe thousands of firings a second and
+      // lock the game up paying them; once per step is the most a game can act
+      // on anyway.
+      const interval = Math.max(trigger.seconds, seconds);
       const elapsed = (host.world.timers.get(ruleId) ?? 0) + seconds;
       let left = elapsed;
-      while (left >= trigger.seconds) {
-        left -= trigger.seconds;
+      while (left >= interval) {
+        left -= interval;
         yield {};
       }
       host.world.timers.set(ruleId, left);
