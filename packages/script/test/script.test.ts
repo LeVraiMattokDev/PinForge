@@ -11,7 +11,7 @@ import {
   loadProject,
   type EventRule,
 } from '@pinforge/schema';
-import { parseScript, printRule, printScript } from '../src/index.js';
+import { buildScriptReference, parseScript, printRule, printScript } from '../src/index.js';
 import { matchLine } from '../src/parse.js';
 import { printAction, printCondition, printTrigger } from '../src/print.js';
 import { ACTION_TEMPLATES, CONDITION_TEMPLATES, TRIGGER_TEMPLATES } from '../src/templates.js';
@@ -60,6 +60,23 @@ describe('every example in the catalog survives the round trip', () => {
       expect(Action.parse(reparse(ACTION_TEMPLATES, line))).toEqual(node);
     });
   }
+});
+
+describe('docs/script.md', () => {
+  const docPath = join(import.meta.dirname, '../../../docs/script.md');
+
+  it('is what the templates produce', () => {
+    expect(readFileSync(docPath, 'utf8')).toBe(`${buildScriptReference()}\n`);
+  });
+
+  it('opens with an example that really reads', () => {
+    const markdown = readFileSync(docPath, 'utf8');
+    const block = /```\n([\s\S]*?)```/.exec(markdown);
+    expect(block?.[1]).toBeDefined();
+    const { rules, issues } = parseScript(block![1]!);
+    expect(issues).toEqual([]);
+    expect(rules.length).toBeGreaterThan(1);
+  });
 });
 
 describe('the example game', () => {

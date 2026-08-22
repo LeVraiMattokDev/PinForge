@@ -111,6 +111,10 @@ coin whether it is standing on the ground, because coins do not have gravity.
 Rules live in a level. Rules that should apply everywhere, like pausing or
 running out of lives, are kept in one place instead of copied into every level.
 
+A rule can be built three ways, and they are one thing: dropdown sentences,
+snap-together blocks, or [PinScript](script.md), the same sentences written as
+text. Whatever one of them says, the other two show.
+
 [The events reference](events-reference.md) lists every trigger, condition and
 action.
 

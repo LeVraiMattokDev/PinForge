@@ -18,9 +18,13 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.tools.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "generate": "tsx scripts/generate.ts"
   },
   "dependencies": {
     "@pinforge/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.3"
   }
 }

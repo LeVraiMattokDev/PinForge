@@ -23,6 +23,9 @@ creation, peer learning and free software.
   play mode running the exact same runtime as the export.
 - **Rules instead of code.** Every behaviour is a sentence you assemble from
   dropdowns: `WHEN Player collides with Coin THEN destroy Coin, add 1 to Score`.
+- **The same rules three ways.** Dropdown sentences, snap-together blocks in
+  the Scratch tradition, and [PinScript](docs/script.md), the sentences as
+  text you can type, copy and share. Three faces, one meaning.
 - **Movement that feels right by default.** Coyote time, jump buffering and
   asymmetric gravity are on, tuned, and invisible unless you go looking.
 - **Export to one HTML file** you can put anywhere.
@@ -83,6 +86,8 @@ See [getting started](docs/getting-started.md) for the walkthrough.
   the file, with a complete annotated example.
 - [Events reference](docs/events-reference.md) — every trigger, condition and
   action, with an example each.
+- [Writing rules as text](docs/script.md) — PinScript, every rule as a sentence
+  you can type, with every phrase listed.
 - [Architecture](docs/architecture.md) — package boundaries and the decisions
   behind them, for contributors.
 - [The MCP server](docs/mcp.md) — building a game with an assistant.

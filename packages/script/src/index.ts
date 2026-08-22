@@ -32,3 +32,4 @@ export {
   type Template,
   type WordPart,
 } from './templates.js';
+export { buildScriptReference } from './reference.js';

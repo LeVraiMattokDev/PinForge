@@ -66,6 +66,18 @@ project file changes, and every change comes with a migration.
   integration that fails if generated files have drifted.
 - `tools/make-placeholder-art.mjs`, which writes the example's pictures and
   sounds so the repository is self contained.
+- `@pinforge/script`: PinScript, every rule as a sentence you can type. One
+  table of sentence templates drives parsing and printing both, so the two can
+  never disagree; parsing returns line-numbered issues written for a person,
+  and printing leaves defaults unsaid. The reference, docs/script.md, is
+  generated from the same table.
+- The Rules tab has three faces of the same rules: the dropdown sentences,
+  snap-together blocks in the Scratch tradition, and PinScript text. A block is
+  a PinScript sentence with a control in every slot. Dragging a block from the
+  palette adds it, between blocks reorders, back to the palette removes it, and
+  onto the empty space starts a new rule.
+- `pinforge rules <game>`: writes every rule in a game as PinScript, grouped
+  the way the editor groups them and ready to paste back in.
 
 ### Changed
 
@@ -82,3 +94,16 @@ project file changes, and every change comes with a migration.
   rule in the same step. Squashing an enemy no longer also costs a life, because
   the squash rule's bounce can no longer change what the "walked into an enemy"
   rule sees.
+- A one-way platform no longer reports a landing while the player rises up
+  through it, which was resetting coyote time and the double jump in mid air.
+- A jump buffer of zero seconds no longer makes jumping impossible, and a jump
+  count of zero now really means no jumps, including from the ground.
+- Feeding a negative frame time into the runtime no longer stalls the
+  simulation until the lost time is paid back.
+- Clicking maps back through the camera shake, so what is under the pointer on
+  a shaking screen is what is hit.
+- A repeating timer far below one step fires once per step instead of freezing
+  the game counting millions of owed firings.
+- Picking "A property is" (or any dropdown choice whose starting point could
+  not be filled in) threw inside the editor instead of doing anything; starting
+  points are now checked and the refusal is explained in words.

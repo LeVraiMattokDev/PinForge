@@ -111,6 +111,10 @@ importers:
       '@pinforge/schema':
         specifier: workspace:*
         version: link:../schema
+    devDependencies:
+      tsx:
+        specifier: ^4.19.3
+        version: 4.23.12
 
 packages:
 
