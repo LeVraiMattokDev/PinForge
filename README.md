@@ -26,6 +26,10 @@ creation, peer learning and free software.
 - **The same rules three ways.** Dropdown sentences, snap-together blocks in
   the Scratch tradition, and [PinScript](docs/script.md), the sentences as
   text you can type, copy and share. Three faces, one meaning.
+- **Whole things, ready made.** Someone to talk to, an enemy that walks about,
+  something to collect, a way to finish the level: one click puts in the kind of
+  thing, a copy of it, and the rules that make it work. Then read those rules to
+  learn how it was done.
 - **Movement that feels right by default.** Coyote time, jump buffering and
   asymmetric gravity are on, tuned, and invisible unless you go looking.
 - **Export to one HTML file** you can put anywhere.
@@ -92,8 +96,6 @@ See [getting started](docs/getting-started.md) for the walkthrough.
   behind them, for contributors.
 - [The MCP server](docs/mcp.md) — building a game with an assistant.
 - [Contributing](CONTRIBUTING.md).
-
-A getting started guide arrives with phase 2, when there is something to run.
 
 ## About PinStudio
 

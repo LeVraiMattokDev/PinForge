@@ -1,7 +1,8 @@
 import { parseProject, type EntityInstance, type Scene } from '@pinforge/schema';
 import * as edit from '../state/commands.js';
 import { useEditor, useEditorState } from '../state/useStore.js';
-import { Button, Note, Panel } from '../ui/controls.js';
+import { Button, Note, Panel, Select } from '../ui/controls.js';
+import { RECIPES, freeCopyId, freeId, recipeById } from '@pinforge/schema';
 
 /**
  * The left column: which level, what is in it, and what kinds of thing exist.
@@ -134,6 +135,15 @@ export function Sidebar() {
         <Button small onClick={() => addKind(store)}>
           Make a new kind of thing
         </Button>
+        <div style={{ marginTop: 10 }}>
+          <Select
+            value=""
+            placeholder="Add something ready-made…"
+            choices={RECIPES.map((one) => ({ value: one.id, label: one.label }))}
+            onChange={(id) => addReadyMade(store, scene.id, id)}
+          />
+          <Note>A whole working thing at once: the kind, one in the level, and its rules.</Note>
+        </div>
       </Panel>
     </>
   );
@@ -141,31 +151,17 @@ export function Sidebar() {
 
 type Store = ReturnType<typeof useEditor>;
 
-export function nextId(taken: readonly string[], stem: string): string {
-  if (!taken.includes(stem)) return stem;
-  for (let number = 2; number < 1000; number += 1) {
-    if (!taken.includes(`${stem}-${number}`)) return `${stem}-${number}`;
-  }
-  return `${stem}-${Date.now()}`;
-}
-
 /**
- * The id for a new copy of something. A copy is always named after its kind and
- * numbered from one, never left bare, because a bare name is the kind's own id
- * and a project where a copy shadows a kind is refused: rules could not tell
- * the two apart. Numbering from one also matches how projects are written by
- * hand, where the first player is player-1.
+ * How a free name is chosen lives in the schema, next to the ready-made things
+ * that also need it, so the editor and a recipe can never disagree about what
+ * counts as taken. A copy is always its kind's name and a number, never the
+ * bare name: a copy that shadows a kind is refused, because rules could not
+ * tell the two apart.
  */
-export function nextInstanceId(taken: readonly string[], prototypeId: string): string {
-  for (let number = 1; number < 1000; number += 1) {
-    const id = `${prototypeId}-${number}`;
-    if (!taken.includes(id)) return id;
-  }
-  return `${prototypeId}-${Date.now()}`;
-}
+export { freeId as nextId, freeCopyId as nextInstanceId } from '@pinforge/schema';
 
 function addLevel(store: Store, scenes: readonly Scene[]): void {
-  const id = nextId(
+  const id = freeId(
     scenes.map((one) => one.id),
     'level',
   );
@@ -194,7 +190,7 @@ function addGroundLayer(store: Store, scene: Scene, tilesetId: string | undefine
     return;
   }
   const layer = {
-    id: nextId(
+    id: freeId(
       scene.layers.map((one) => one.id),
       'ground',
     ),
@@ -215,7 +211,7 @@ function place(store: Store, scene: Scene, prototypeId: string): void {
   const instance: EntityInstance = {
     // Both lists: a copy may not take the name of another copy, nor of any
     // kind in the project.
-    id: nextInstanceId(
+    id: freeCopyId(
       [
         ...scene.entities.map((one) => one.id),
         ...store.getState().project.entities.map((one) => one.id),
@@ -234,9 +230,22 @@ function place(store: Store, scene: Scene, prototypeId: string): void {
   store.set({ selection: { kind: 'instance', id: instance.id }, tool: 'select' });
 }
 
+/**
+ * Drops in a ready-made thing, and then says what it did and what to change
+ * next — a recipe that appears silently is a recipe nobody trusts.
+ */
+function addReadyMade(store: Store, sceneId: string, recipeId: string): void {
+  const recipe = recipeById(recipeId);
+  if (!recipe) return;
+  store.apply(edit.addRecipe(recipe, sceneId));
+  if (store.getState().problem === undefined) {
+    store.set({ notice: `${recipe.label}: ${recipe.afterwards}` });
+  }
+}
+
 function addKind(store: Store): void {
   const project = store.getState().project;
-  const id = nextId(
+  const id = freeId(
     project.entities.map((one) => one.id),
     'thing',
   );

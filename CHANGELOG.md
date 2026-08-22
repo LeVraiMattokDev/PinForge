@@ -130,6 +130,17 @@ player`, and the same for right, above and below. Paired with setting a
   so a locked door had no way to notice the player standing at it. Proven by a
   playtester leaning on their door for six hundred steps and getting nothing,
   then spending two invisible sensor entities per door on it.
+- Ready-made things, in the editor's Kinds of thing panel: someone to talk to,
+  an enemy that walks about, something to collect, a way to finish the level.
+  Each puts in the kind of thing, one copy of it in the level and the rules that
+  make it work, as one step that can be undone, and then says what to change
+  next. Assembling that furniture one sentence at a time was the slowest part of
+  using PinForge, and slowest for exactly the person it is for.
+- "Wait until a control is pressed", which is what a line of dialogue needs:
+  with pausing before it, the game holds still while someone talks and the
+  player reads at their own pace.
+- A calm banner for when something worked and there is a next step worth naming,
+  alongside the red one for a change that was refused. Only ever one at a time.
 
 ### Changed
 
@@ -145,6 +156,11 @@ player`, and the same for right, above and below. Paired with setting a
   is for, and anything that must physically block belongs in a tile layer.
 - Patrolling is no longer hidden inside the inspector's collapsed "how it feels"
   section, where it does not belong, and now names which way it sets off.
+- An entity draws a picture or some words, never both, and the inspector used to
+  grey the picture button out while any words were there — with nothing anywhere
+  to take the words away again. So anything showing words could never be given a
+  picture, ever. Choosing one now puts the other away, which is what the button
+  had always said it would do.
 
 ### Fixed
 

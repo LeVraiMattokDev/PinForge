@@ -319,3 +319,70 @@ describe('rewriting rules through the store', () => {
     expect(back.rules).toEqual(editor.getState().project.scenes[0]!.events);
   });
 });
+
+describe('a picture or some words, and changing your mind', () => {
+  /**
+   * An entity draws one or the other, never both, and the editor used to grey
+   * out the picture button while any text was there — with nothing anywhere to
+   * take the text away again. So anything showing words could never be given a
+   * picture, for the rest of the project's life.
+   */
+  it('swaps one for the other rather than refusing', () => {
+    const editor = new EditorStore(parseProject(project()));
+    const player = () => editor.getState().project.entities.find((one) => one.id === 'player')!;
+    expect(player().components.sprite).toBeDefined();
+
+    // Words instead of the picture.
+    editor.apply(
+      edit.updatePrototype({
+        ...player(),
+        components: {
+          ...player().components,
+          text: { content: 'Hello', color: '#ffffff', align: 'left', size: 'normal' },
+          sprite: undefined,
+        },
+      }),
+    );
+    expect(editor.getState().problem).toBeUndefined();
+    expect(player().components.text).toBeDefined();
+    expect(player().components.sprite).toBeUndefined();
+
+    // And back again, which is what used to be impossible.
+    editor.apply(
+      edit.updatePrototype({
+        ...player(),
+        components: {
+          ...player().components,
+          sprite: {
+            image: 'tiles',
+            frameWidth: 16,
+            frameHeight: 16,
+            offset: { x: 0, y: 0 },
+            flipToFaceMovement: false,
+            animations: [],
+          },
+          text: undefined,
+        },
+      }),
+    );
+    expect(editor.getState().problem).toBeUndefined();
+    expect(player().components.sprite).toBeDefined();
+    expect(player().components.text).toBeUndefined();
+  });
+
+  it('still refuses both at once, because an entity draws one thing', () => {
+    const editor = new EditorStore(parseProject(project()));
+    const player = editor.getState().project.entities.find((one) => one.id === 'player')!;
+
+    editor.apply(
+      edit.updatePrototype({
+        ...player,
+        components: {
+          ...player.components,
+          text: { content: 'Hello', color: '#ffffff', align: 'left', size: 'normal' },
+        },
+      }),
+    );
+    expect(editor.getState().problem).toContain('one or the other');
+  });
+});

@@ -270,6 +270,16 @@ describe('every action the engine advertises does something', () => {
     'enable-rule': (game) => Number(game.variable('ticks')) > 0,
     // And here it starts switched on, so never ticking proves it was switched off.
     'disable-rule': (game) => game.variable('ticks') === 0,
+    // Waiting on the player has to hold the rest of the rule back until the
+    // player actually presses something, however long that takes.
+    'wait-for-press': (game) => {
+      const heldBack = game.variable('score') !== 9;
+      steps(game, 300);
+      const stillHeld = game.variable('score') !== 9;
+      game.input.press('action');
+      steps(game, 2);
+      return heldBack && stillHeld && game.variable('score') === 9;
+    },
     // Waiting has to hold the rest of the rule back, and then let it through.
     wait: (game) => {
       const heldBack = game.variable('score') !== 9;
@@ -373,7 +383,7 @@ describe('every action the engine advertises does something', () => {
                 {
                   id: 'under-test',
                   when: { type: 'scene-starts' as const },
-                  then: (type === 'wait'
+                  then: (type === 'wait' || type === 'wait-for-press'
                     ? [example, { type: 'set-variable', variable: 'score', value: 9 }]
                     : [example]) as NonNullable<WorldOptions['events']>[number]['then'],
                 },

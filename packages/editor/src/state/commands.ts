@@ -1,4 +1,5 @@
 import type {
+  Recipe,
   Asset,
   EntityInstance,
   EntityPrototype,
@@ -178,6 +179,11 @@ export function removePrototype(id: string): Command {
       entities: scene.entities.filter((instance) => instance.prototype !== id),
     })),
   }));
+}
+
+/** Drops a whole ready-made behaviour in: the kind, the copy, the rules. */
+export function addRecipe(recipe: Recipe, sceneId: string): Command {
+  return command(`Add ${recipe.label.toLowerCase()}`, (project) => recipe.add(project, sceneId));
 }
 
 // --- levels -----------------------------------------------------------------

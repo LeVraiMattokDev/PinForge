@@ -346,6 +346,13 @@ export const ACTIONS: Record<ActionType, CatalogEntry> = {
     modes: ANY_MODE,
     example: { type: 'restart-scene' },
   },
+  'wait-for-press': {
+    label: 'Wait until a control is pressed',
+    summary:
+      'Holds the rest of this rule until the player presses something. With "pause the game" before it, that is a line of dialogue the player reads at their own pace.',
+    modes: ANY_MODE,
+    example: { type: 'wait-for-press', action: 'action' },
+  },
   'pause-game': {
     label: 'Pause the game',
     summary:

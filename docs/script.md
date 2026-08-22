@@ -526,3 +526,11 @@ Pauses the rest of this rule for a moment. The game keeps running.
 then wait <seconds> seconds
 ```
 
+### Wait until a control is pressed
+
+Holds the rest of this rule until the player presses something. With "pause the game" before it, that is a line of dialogue the player reads at their own pace.
+
+```
+then wait until <action> is pressed
+```
+

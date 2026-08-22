@@ -95,6 +95,10 @@ export const Action = z.discriminatedUnion('type', [
   }),
   z.strictObject({ type: z.literal('go-to-scene'), scene: Id }),
   z.strictObject({ type: z.literal('restart-scene') }),
+  z.strictObject({
+    type: z.literal('wait-for-press'),
+    action: Id.meta({ description: 'The control the player has to press to carry on.' }),
+  }),
   z.strictObject({ type: z.literal('pause-game') }),
   z.strictObject({ type: z.literal('resume-game') }),
   z.strictObject({ type: z.literal('set-camera-target'), target: EntityRef }),

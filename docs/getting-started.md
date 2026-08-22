@@ -88,10 +88,41 @@ have no gravity. And a change that would leave the game broken is refused with a
 sentence saying why, instead of producing a game that will not start.
 
 Every trigger, condition and action is listed in
-[the events reference](events-reference.md). There are sixteen, ten and
-twenty-two of them, and that is the whole language.
+[the events reference](events-reference.md), and that is the whole language.
 
-## 5. Use your own pictures
+## 5. Get a whole thing at once
+
+Rules one sentence at a time is how you learn the language, and it is a slow way
+to get the ordinary furniture of a game in. Someone to talk to is six sentences
+and a countdown once you know how; the first time, it is an afternoon.
+
+So the editor keeps a few whole things ready. In the **Kinds of thing** panel,
+open **Add something ready-made**:
+
+- **Someone to talk to** — a character standing in the level. Walk into them and
+  the game holds still while they say two lines, one press of your action key at
+  a time. Nothing moves and no timer runs while they are talking.
+- **An enemy that walks about** — walks back and forth on its own, turning at
+  walls, and costs you the level if it catches you. In a game with gravity you
+  can also land on it to squash it.
+- **Something to collect** — disappears when you touch it and adds one to your
+  score, making a `score` for you if the game has not got one.
+- **A way to finish the level** — ends the level when you reach it, and takes you
+  to the next one if there is one.
+
+Each of these puts in the kind of thing, one copy of it in the level, and the
+rules that make it work — all as one step you can undo. Then it tells you what
+to change next.
+
+They arrive wearing their own name — `Villager`, `Enemy` — rather than a picture,
+so you can tell them apart before you have drawn anything. When you have art for
+one, select it and press **Give it a picture instead**.
+
+Go and read the rules a recipe wrote. They are ordinary sentences with nothing
+special about them, and reading one is the fastest way to learn how a thing you
+want is built.
+
+## 6. Use your own pictures
 
 **Pictures and sounds** takes PNG pictures and WAV or MP3 sounds. They are stored
 inside the game file, so a game stays one thing you can move anywhere.
@@ -106,7 +137,7 @@ To paint with a picture, press **Use as tiles** on it and say how big one tile i
 PinForge does not draw pictures or make sounds. It imports them, and gets on with
 being a game engine.
 
-## 6. Add a second level
+## 7. Add a second level
 
 Press **Add** next to *Levels*. Then finish the first level by sending the player
 onward: a rule with **WHEN** two things touch (player, flag) **THEN** go to the
@@ -115,7 +146,7 @@ level.
 Rules that should apply everywhere — losing a life, running out of lives, pausing
 — belong under *Rules for the whole game* rather than copied into each level.
 
-## 7. Share it
+## 8. Share it
 
 **Save to a file** gives you `my-game.pinforge.json`. That file is the whole game.
 

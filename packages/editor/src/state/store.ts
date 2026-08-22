@@ -32,6 +32,8 @@ export interface EditorState {
   readonly zoom: number;
   /** Set when a change is refused, so the interface can say why. */
   readonly problem: string | undefined;
+  /** Set when something worked and there is a next step worth naming. */
+  readonly notice: string | undefined;
   readonly savedAt: number | undefined;
   readonly changedSinceSave: boolean;
   readonly undoLabel: string | undefined;
@@ -74,6 +76,7 @@ export class EditorStore {
       playing: false,
       zoom: 2,
       problem: undefined,
+      notice: undefined,
       savedAt: undefined,
       changedSinceSave: false,
       undoLabel: undefined,
@@ -120,21 +123,31 @@ export class EditorStore {
       if (this.past.length > HISTORY_LIMIT) this.past.shift();
     }
     this.future = [];
-    this.set({ project: next, problem: advice, changedSinceSave: true });
+    this.set({ project: next, problem: advice, notice: undefined, changedSinceSave: true });
   }
 
   undo(): void {
     const previous = this.past.pop();
     if (!previous) return;
     this.future.push({ ...previous, project: this.state.project });
-    this.set({ project: previous.project, changedSinceSave: true, problem: undefined });
+    this.set({
+      project: previous.project,
+      changedSinceSave: true,
+      problem: undefined,
+      notice: undefined,
+    });
   }
 
   redo(): void {
     const next = this.future.pop();
     if (!next) return;
     this.past.push({ ...next, project: this.state.project });
-    this.set({ project: next.project, changedSinceSave: true, problem: undefined });
+    this.set({
+      project: next.project,
+      changedSinceSave: true,
+      problem: undefined,
+      notice: undefined,
+    });
   }
 
   /** Replaces the whole project, as when a file is opened. Clears the history. */
@@ -154,6 +167,7 @@ export class EditorStore {
         activeLayerId: scene?.layers[0]?.id,
         playing: false,
         problem: undefined,
+        notice: undefined,
         changedSinceSave: false,
       };
       this.announce();

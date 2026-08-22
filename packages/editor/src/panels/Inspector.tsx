@@ -427,8 +427,12 @@ function PrototypeInspector({ store, prototype }: { store: Store; prototype: Ent
       ) : (
         <Button
           small
-          disabled={images.length === 0 || Boolean(prototype.components.text)}
+          disabled={images.length === 0}
           onClick={() =>
+            // An entity draws a picture or some words, never both, so choosing
+            // one puts the other away. The button has always said "instead of",
+            // and used to be greyed out instead of doing it, which left anything
+            // showing words unable to ever be given a picture.
             components({
               sprite: {
                 image: images[0]!.id,
@@ -438,10 +442,15 @@ function PrototypeInspector({ store, prototype }: { store: Store; prototype: Ent
                 flipToFaceMovement: false,
                 animations: [],
               },
+              text: undefined,
             })
           }
         >
-          {images.length === 0 ? 'Add a picture first' : 'Give it a picture'}
+          {images.length === 0
+            ? 'Add a picture first'
+            : prototype.components.text
+              ? 'Give it a picture instead'
+              : 'Give it a picture'}
         </Button>
       )}
 
@@ -508,10 +517,10 @@ function PrototypeInspector({ store, prototype }: { store: Store; prototype: Ent
       ) : (
         <Button
           small
-          disabled={Boolean(sprite)}
           onClick={() =>
             components({
               text: { content: 'Score: {score}', color: '#ffffff', align: 'left', size: 'normal' },
+              sprite: undefined,
             })
           }
         >

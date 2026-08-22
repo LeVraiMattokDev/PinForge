@@ -2306,6 +2306,26 @@
                   "properties": {
                     "type": {
                       "type": "string",
+                      "const": "wait-for-press"
+                    },
+                    "action": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "The control the player has to press to carry on."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "action"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
                       "const": "pause-game"
                     }
                   },
@@ -4497,6 +4517,26 @@
                         },
                         "required": [
                           "type"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "wait-for-press"
+                          },
+                          "action": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "The control the player has to press to carry on."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "action"
                         ],
                         "additionalProperties": false
                       },

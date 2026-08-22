@@ -71,7 +71,8 @@ textarea {
   grid-row: 2;
 }
 
-.shell > .problem {
+.shell > .problem,
+.shell > .notice {
   grid-row: 3;
 }
 
@@ -209,6 +210,19 @@ textarea {
   color: var(--ink-soft);
   font-size: 13px;
   margin: 6px 0 0;
+}
+
+/* The calm twin of .problem: something worked, and here is what to do next. */
+.notice {
+  margin: 0 20px 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
 }
 
 .problem {

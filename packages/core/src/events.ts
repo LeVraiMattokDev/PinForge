@@ -42,6 +42,12 @@ export interface PendingActions {
   actions: readonly Action[];
   index: number;
   waitLeft: number;
+  /**
+   * When set, the rest of the rule is waiting for the player to press this
+   * control rather than for a length of time. That is what turns a message into
+   * a line of dialogue read at the player's own pace.
+   */
+  waitFor?: string;
   context: RuleContext;
 }
 
@@ -356,6 +362,11 @@ function advance(host: RuntimeHost, pending: PendingActions): void {
       host.queue(pending);
       return;
     }
+    if (action.type === 'wait-for-press') {
+      pending.waitFor = action.action;
+      host.queue(pending);
+      return;
+    }
     perform(host, action, pending.context);
     if (host.changingScene) return;
   }
@@ -364,10 +375,20 @@ function advance(host: RuntimeHost, pending: PendingActions): void {
 export function advancePending(host: RuntimeHost, seconds: number): void {
   const waiting = host.takePending();
   for (const pending of waiting) {
-    pending.waitLeft -= seconds;
-    if (pending.waitLeft > 0) {
-      host.queue(pending);
-      continue;
+    if (pending.waitFor !== undefined) {
+      // Waiting on the player, not on the clock. This keeps working while the
+      // game is paused, which is the whole point of it.
+      if (!host.input.wasPressed(pending.waitFor)) {
+        host.queue(pending);
+        continue;
+      }
+      pending.waitFor = undefined;
+    } else {
+      pending.waitLeft -= seconds;
+      if (pending.waitLeft > 0) {
+        host.queue(pending);
+        continue;
+      }
     }
     advance(host, pending);
     if (host.changingScene) return;
@@ -513,6 +534,7 @@ function perform(host: RuntimeHost, action: Action, context: RuleContext): void 
       host.setRuleEnabled(action.rule, false);
       return;
     case 'wait':
+    case 'wait-for-press':
       return;
   }
 }

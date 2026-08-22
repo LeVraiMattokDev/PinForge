@@ -260,4 +260,5 @@ export const ACTION_TEMPLATES: readonly Template[] = [
   template('enable-rule', 'turn on the rule {rule:id}'),
   template('disable-rule', 'turn off the rule {rule:id}'),
   template('wait', 'wait {seconds:number} seconds'),
+  template('wait-for-press', 'wait until {action:id} is pressed'),
 ];

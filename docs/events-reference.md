@@ -509,6 +509,16 @@ Starts the current scene again from the beginning.
 {"type":"restart-scene"}
 ```
 
+### Wait until a control is pressed
+
+`wait-for-press`
+
+Holds the rest of this rule until the player presses something. With "pause the game" before it, that is a line of dialogue the player reads at their own pace.
+
+```json
+{"type":"wait-for-press","action":"action"}
+```
+
 ### Pause the game
 
 `pause-game`

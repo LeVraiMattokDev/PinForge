@@ -133,14 +133,25 @@ export function App() {
         ))}
       </nav>
 
-      {state.problem === undefined ? null : (
+      {/*
+        One row for either banner, never both, so the row the editor itself
+        lives in is never the one a banner grows into.
+      */}
+      {state.problem !== undefined ? (
         <div className="problem" role="alert">
           <span>{state.problem}</span>
           <Button small kind="quiet" onClick={() => store.set({ problem: undefined })}>
             Close
           </Button>
         </div>
-      )}
+      ) : state.notice !== undefined ? (
+        <div className="notice" role="status">
+          <span>{state.notice}</span>
+          <Button small kind="quiet" onClick={() => store.set({ notice: undefined })}>
+            Close
+          </Button>
+        </div>
+      ) : null}
 
       <main className={`body${state.tab === 'level' ? '' : ' wide'}`}>
         {state.tab === 'level' ? (
