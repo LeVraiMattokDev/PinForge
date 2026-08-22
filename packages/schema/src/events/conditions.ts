@@ -29,6 +29,13 @@ export const Condition = z.discriminatedUnion('type', [
     negate,
   }),
   z.strictObject({
+    type: z.literal('variable-compare'),
+    left: Id,
+    operator: Comparison.default('equals'),
+    right: Id,
+    negate,
+  }),
+  z.strictObject({
     type: z.literal('property-is'),
     target: EntityRef,
     property: Id,

@@ -133,6 +133,18 @@ export const CONDITIONS: Record<ConditionType, CatalogEntry> = {
     modes: ANY_MODE,
     example: { type: 'variable-is', variable: 'score', operator: 'at-least', value: 3 },
   },
+  'variable-compare': {
+    label: 'One variable, compared with another',
+    summary:
+      'Compares two variables with each other rather than with a fixed number, which is what a best score needs.',
+    modes: ANY_MODE,
+    example: {
+      type: 'variable-compare',
+      left: 'score',
+      operator: 'greater-than',
+      right: 'high-score',
+    },
+  },
   'property-is': {
     label: 'A property is',
     summary: 'Compares a custom property on an entity with a value.',
@@ -237,6 +249,12 @@ export const ACTIONS: Record<ActionType, CatalogEntry> = {
     summary: 'Adds to, subtracts from, multiplies or divides a number variable.',
     modes: ANY_MODE,
     example: { type: 'change-variable', variable: 'score', operator: 'add', value: 1 },
+  },
+  'copy-variable': {
+    label: 'Copy a variable into another',
+    summary: 'Puts what one variable holds into another one, for remembering a best score.',
+    modes: ANY_MODE,
+    example: { type: 'copy-variable', from: 'score', into: 'high-score' },
   },
   'set-property': {
     label: 'Set a property to',

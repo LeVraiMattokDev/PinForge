@@ -275,6 +275,14 @@ Compares a variable with a value.
 if <variable> <is / is not / is at least / ...> <value>
 ```
 
+### One variable, compared with another
+
+Compares two variables with each other rather than with a fixed number, which is what a best score needs.
+
+```
+if <left> <is / is not / is at least / ...> <right>
+```
+
 ## Actions
 
 The THEN half. What the rule does.
@@ -338,6 +346,14 @@ then subtract <value> from <variable>
 then multiply <variable> by <value>
 then divide <variable> by <value>
 then change <variable> to <value>
+```
+
+### Copy a variable into another
+
+Puts what one variable holds into another one, for remembering a best score.
+
+```
+then copy <from> into <into>
 ```
 
 ### Set a property to

@@ -792,3 +792,76 @@ describe('pausing', () => {
     expect(game.paused).toBe(false);
   });
 });
+
+/**
+ * A best score that survives a replay. A playtester building an arcade game
+ * reached for "if this run beat my best, remember it", found that every value
+ * in the whole vocabulary was a fixed number, and shipped eight threshold
+ * rules that ratchet a *band* instead — so the game could say "best band: 250"
+ * but never "best: 287".
+ */
+describe('comparing and copying one variable with another', () => {
+  const arcade = () =>
+    makeGame({
+      variables: [
+        { id: 'score', type: 'number', initial: 0 },
+        { id: 'high-score', type: 'number', initial: 0 },
+      ],
+      events: [
+        {
+          id: 'remember-the-best',
+          when: { type: 'variable-changes', variable: 'score' },
+          if: [
+            {
+              type: 'variable-compare',
+              left: 'score',
+              operator: 'greater-than',
+              right: 'high-score',
+            },
+          ],
+          then: [{ type: 'copy-variable', from: 'score', into: 'high-score' }],
+        },
+      ],
+    });
+
+  it('remembers the exact best score, not a band', () => {
+    const game = arcade();
+    game.setVariable('score', 287);
+    steps(game, 3);
+    expect(game.variable('high-score')).toBe(287);
+  });
+
+  it('leaves the best alone when the run was worse', () => {
+    const game = arcade();
+    game.setVariable('score', 287);
+    steps(game, 3);
+    game.setVariable('score', 40);
+    steps(game, 3);
+
+    expect(game.variable('high-score')).toBe(287);
+  });
+
+  it('still reads a fixed number on the right, rather than a variable called 3', () => {
+    // The sentence "score is at least 3" has to keep meaning the number three
+    // now that "score is at least high-score" is also a sentence.
+    const game = makeGame({
+      variables: [
+        { id: 'score', type: 'number', initial: 0 },
+        { id: 'fired', type: 'boolean', initial: false },
+      ],
+      events: [
+        {
+          id: 'threshold',
+          when: { type: 'every-frame' },
+          if: [{ type: 'variable-is', variable: 'score', operator: 'at-least', value: 3 }],
+          then: [{ type: 'set-variable', variable: 'fired', value: true }],
+        },
+      ],
+    });
+    steps(game, 3);
+    expect(game.variable('fired')).toBe(false);
+    game.setVariable('score', 5);
+    steps(game, 2);
+    expect(game.variable('fired')).toBe(true);
+  });
+});

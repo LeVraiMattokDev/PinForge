@@ -51,6 +51,11 @@ export const Action = z.discriminatedUnion('type', [
     value: z.number(),
   }),
   z.strictObject({
+    type: z.literal('copy-variable'),
+    from: Id,
+    into: Id,
+  }),
+  z.strictObject({
     type: z.literal('set-property'),
     target: EntityRef,
     property: Id,

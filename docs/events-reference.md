@@ -199,6 +199,16 @@ Compares a variable with a value.
 {"type":"variable-is","variable":"score","operator":"at-least","value":3}
 ```
 
+### One variable, compared with another
+
+`variable-compare`
+
+Compares two variables with each other rather than with a fixed number, which is what a best score needs.
+
+```json
+{"type":"variable-compare","left":"score","operator":"greater-than","right":"high-score"}
+```
+
 ### A property is
 
 `property-is`
@@ -367,6 +377,16 @@ Adds to, subtracts from, multiplies or divides a number variable.
 
 ```json
 {"type":"change-variable","variable":"score","operator":"add","value":1}
+```
+
+### Copy a variable into another
+
+`copy-variable`
+
+Puts what one variable holds into another one, for remembering a best score.
+
+```json
+{"type":"copy-variable","from":"score","into":"high-score"}
 ```
 
 ### Set a property to

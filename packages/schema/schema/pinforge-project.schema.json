@@ -1327,6 +1327,50 @@
                   "properties": {
                     "type": {
                       "type": "string",
+                      "const": "variable-compare"
+                    },
+                    "left": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "operator": {
+                      "default": "equals",
+                      "type": "string",
+                      "enum": [
+                        "equals",
+                        "not-equals",
+                        "at-least",
+                        "at-most",
+                        "greater-than",
+                        "less-than"
+                      ]
+                    },
+                    "right": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "negate": {
+                      "default": false,
+                      "description": "Require the opposite.",
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "left",
+                    "right"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
                       "const": "property-is"
                     },
                     "target": {
@@ -1832,6 +1876,33 @@
                     "type",
                     "variable",
                     "value"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "copy-variable"
+                    },
+                    "from": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    },
+                    "into": {
+                      "type": "string",
+                      "maxLength": 64,
+                      "pattern": "^[a-z0-9][a-z0-9-]*$",
+                      "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "from",
+                    "into"
                   ],
                   "additionalProperties": false
                 },
@@ -3336,6 +3407,50 @@
                         "properties": {
                           "type": {
                             "type": "string",
+                            "const": "variable-compare"
+                          },
+                          "left": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "operator": {
+                            "default": "equals",
+                            "type": "string",
+                            "enum": [
+                              "equals",
+                              "not-equals",
+                              "at-least",
+                              "at-most",
+                              "greater-than",
+                              "less-than"
+                            ]
+                          },
+                          "right": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "negate": {
+                            "default": false,
+                            "description": "Require the opposite.",
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "left",
+                          "right"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
                             "const": "property-is"
                           },
                           "target": {
@@ -3841,6 +3956,33 @@
                           "type",
                           "variable",
                           "value"
+                        ],
+                        "additionalProperties": false
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "const": "copy-variable"
+                          },
+                          "from": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          },
+                          "into": {
+                            "type": "string",
+                            "maxLength": 64,
+                            "pattern": "^[a-z0-9][a-z0-9-]*$",
+                            "description": "A stable identifier, for example \"player\" or \"level-1\"."
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "from",
+                          "into"
                         ],
                         "additionalProperties": false
                       },

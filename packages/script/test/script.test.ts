@@ -165,6 +165,33 @@ then say "The door said \\"no\\"." for 1 second
     expect(rules[0]?.then[1]).toEqual({ type: 'spawn', entity: 'coin', x: 0, y: 0 });
   });
 
+  it('tells a fixed number on the right from the name of another variable', () => {
+    // Adding "score is at least high-score" must not make "score is at least
+    // 3" read as a comparison against a variable called 3.
+    const { rules, issues } = parseScript(
+      [
+        'rule numbers',
+        'when the level starts',
+        'if score is at least 3',
+        'if score is more than high-score',
+        'if name is "bob"',
+        'then restart the level',
+      ].join('\n'),
+    );
+    expect(issues).toEqual([]);
+    expect(rules[0]?.if).toEqual([
+      { type: 'variable-is', variable: 'score', operator: 'at-least', value: 3, negate: false },
+      {
+        type: 'variable-compare',
+        left: 'score',
+        operator: 'greater-than',
+        right: 'high-score',
+        negate: false,
+      },
+      { type: 'variable-is', variable: 'name', operator: 'equals', value: 'bob', negate: false },
+    ]);
+  });
+
   it('tells one line of speed from a whole one', () => {
     const { rules, issues } = parseScript(
       [

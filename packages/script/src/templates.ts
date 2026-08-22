@@ -159,6 +159,9 @@ export const CONDITION_TEMPLATES: readonly Template[] = [
   template('current-scene-is', 'the level is {scene:id}'),
   template('property-is', '{property:id} of {target:ref} {operator:cmp} {value:value}'),
   template('variable-is', '{variable:id} {operator:cmp} {value:value}'),
+  // Last of the three: a bare word that is not a number, true, false or quoted
+  // text can only be the name of another variable.
+  template('variable-compare', '{left:id} {operator:cmp} {right:id}'),
 ];
 
 export const ACTION_TEMPLATES: readonly Template[] = [
@@ -194,6 +197,7 @@ export const ACTION_TEMPLATES: readonly Template[] = [
   template('change-variable', 'change {variable:id} to {value:number}', {
     set: { operator: 'set' },
   }),
+  template('copy-variable', 'copy {from:id} into {into:id}'),
   template('set-property', 'set {property:id} of {target:ref} to {value:value}'),
   template('change-property', 'add {value:number} to {property:id} of {target:ref}', {
     set: { operator: 'add' },

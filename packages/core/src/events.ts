@@ -257,6 +257,11 @@ function holds(host: RuntimeHost, condition: Condition, context: RuleContext): b
   switch (condition.type) {
     case 'variable-is':
       return compare(host.variable(condition.variable), condition.operator, condition.value);
+    case 'variable-compare': {
+      const right = host.variable(condition.right);
+      if (right === undefined) return false;
+      return compare(host.variable(condition.left), condition.operator, right);
+    }
     case 'property-is':
       return resolve(world, condition.target, context).some((entity) =>
         compare(entity.properties.get(condition.property), condition.operator, condition.value),
@@ -403,6 +408,11 @@ function perform(host: RuntimeHost, action: Action, context: RuleContext): void 
         apply(Number(host.variable(action.variable) ?? 0), action.operator, action.value),
       );
       return;
+    case 'copy-variable': {
+      const value = host.variable(action.from);
+      if (value !== undefined) host.setVariable(action.into, value);
+      return;
+    }
     case 'set-property':
       for (const entity of resolve(world, action.target, context)) {
         entity.properties.set(action.property, action.value);

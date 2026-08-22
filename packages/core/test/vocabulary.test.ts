@@ -20,6 +20,8 @@ const FIRED: NonNullable<WorldOptions['variables']> = [
   // Written only by the witness rule below, so an action under test and the
   // witness can never be mistaken for one another.
   { id: 'ticks', type: 'number', initial: 0 },
+  // Written by nobody, so copying it somewhere proves the copy happened.
+  { id: 'best', type: 'number', initial: 7 },
 ];
 
 const PROTOTYPES: NonNullable<ProjectInput['entities']> = [
@@ -230,6 +232,7 @@ describe('every action the engine advertises does something', () => {
     teleport: (game) => player(game).x === 24,
     jump: (game) => player(game).velocityY < 0,
     'set-variable': (game) => game.variable('score') === 9,
+    'copy-variable': (game) => game.variable('score') === 7,
     'change-variable': (game) => game.variable('score') === 1,
     'set-property': (game) => player(game).properties.get('hits-left') === 5,
     'change-property': (game) => player(game).properties.get('hits-left') === 3,
@@ -319,6 +322,10 @@ describe('every action the engine advertises does something', () => {
         example.value = 9;
       }
       if (type === 'change-variable') example.value = 1;
+      if (type === 'copy-variable') {
+        example.from = 'best';
+        example.into = 'score';
+      }
       if (type === 'set-property') example.value = 5;
       if (type === 'go-to-scene') example.scene = 'level-2';
       if (type === 'set-tile') {
@@ -392,6 +399,10 @@ describe('every condition the engine advertises can hold and can refuse', () => 
   const HOLDS: Record<string, { condition: Record<string, unknown>; scenario: Scenario }> = {
     'variable-is': {
       condition: { type: 'variable-is', variable: 'score', operator: 'equals', value: 0 },
+      scenario: { world: { entities: ON_FLOOR } },
+    },
+    'variable-compare': {
+      condition: { type: 'variable-compare', left: 'score', operator: 'equals', right: 'ticks' },
       scenario: { world: { entities: ON_FLOOR } },
     },
     'property-is': {

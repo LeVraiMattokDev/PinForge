@@ -51,6 +51,9 @@ const WORDS: Record<string, { label: string; hint?: string; kind?: FieldKind }> 
   },
   entity: { label: 'Which thing', kind: 'entity' },
   variable: { label: 'Variable', kind: 'variable' },
+  left: { label: 'This variable', kind: 'variable' },
+  right: { label: 'Compared with', kind: 'variable' },
+  into: { label: 'Into the variable', kind: 'variable' },
   scene: { label: 'Level', kind: 'scene' },
   action: {
     label: 'Control',
@@ -94,6 +97,8 @@ const WORDS: Record<string, { label: string; hint?: string; kind?: FieldKind }> 
 /** Where the schema alone cannot say which list a name comes from. */
 const BY_TYPE: Record<string, FieldKind> = {
   'spawn.entity': 'prototype',
+  // "from" names an entity everywhere else, but a variable here.
+  'copy-variable.from': 'variable',
   'touches-tile.tag': 'tile-tag',
   'move.x': 'number',
   'move.y': 'number',

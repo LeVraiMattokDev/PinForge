@@ -585,6 +585,11 @@ function checkCondition(
       checkVariable(condition.variable, `${path}/variable`, index, issues);
       checkVariableValue(condition.variable, condition.value, `${path}/value`, index, issues);
       break;
+    case 'variable-compare':
+      checkVariable(condition.left, `${path}/left`, index, issues);
+      checkVariable(condition.right, `${path}/right`, index, issues);
+      checkSameKind(condition.left, condition.right, `${path}/right`, index, issues);
+      break;
     case 'property-is':
       checkEntityRef(condition.target, `${path}/target`, scope, index, issues, context);
       checkProperty(
@@ -686,6 +691,11 @@ function checkAction(
       }
       break;
     }
+    case 'copy-variable':
+      checkVariable(action.from, `${path}/from`, index, issues);
+      checkVariable(action.into, `${path}/into`, index, issues);
+      checkSameKind(action.from, action.into, `${path}/into`, index, issues);
+      break;
     case 'set-property':
       checkEntityRef(action.target, `${path}/target`, scope, index, issues, context);
       checkProperty(
@@ -808,6 +818,28 @@ function checkVariableValue(
       `"${name}" holds ${describeType(variable.type)}, but this rule uses ${JSON.stringify(value)}.`,
     );
   }
+}
+
+/**
+ * Two variables used together have to hold the same kind of thing. Comparing a
+ * score with a name, or copying a name into a score, is a mistake worth saying
+ * out loud rather than quietly turning into a number.
+ */
+function checkSameKind(
+  first: string,
+  second: string,
+  path: string,
+  index: ProjectIndex,
+  issues: Issues,
+): void {
+  const left = index.variables.get(first);
+  const right = index.variables.get(second);
+  if (!left || !right || left.type === right.type) return;
+  issues.add(
+    path,
+    'mismatched-variables',
+    `"${first}" holds ${describeType(left.type)} and "${second}" holds ${describeType(right.type)}, so they cannot be used together.`,
+  );
 }
 
 function checkScene(id: string, path: string, index: ProjectIndex, issues: Issues): void {
