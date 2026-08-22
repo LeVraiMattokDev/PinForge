@@ -86,8 +86,9 @@ Same project, same configuration; it wraps what you already built.
 ## Making it yours
 
 - **Window title and size** — `src-tauri/tauri.conf.json`. The size starts at
-  three times the game's own resolution, the way play mode shows it, and stays
-  inside a 1600 by 900 screen.
+  three times the game's own resolution, the way play mode shows it, scaled down
+  where three times would not fit a 1600 by 900 screen. A game already that big
+  opens at its own size.
 - **Icon** — `src-tauri/icons`. Four files, replace them with your own drawing at
   the same sizes. `icon.ico` is the one Windows shows.
 - **`identifier`** — `org.pinforge.<your-game>` until you change it. Give it your
