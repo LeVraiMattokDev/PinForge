@@ -78,6 +78,32 @@ project file changes, and every change comes with a migration.
   onto the empty space starts a new rule.
 - `pinforge rules <game>`: writes every rule in a game as PinScript, grouped
   the way the editor groups them and ready to paste back in.
+- Pausing, which the editor, the getting started guide and the format reference
+  had all been naming as the canonical rule for the whole game while the engine
+  shipped no way to do it — and while the format shipped a pause control bound
+  to escape by default. `pause the game` freezes the step: nothing moves, no
+  animation plays, the camera holds still, no timer runs, the clock stops, and a
+  player leaning on a direction key goes nowhere. While paused the only
+  triggers still heard are the player's own, which is what lets one rule start
+  the game again and why no other rule needs an "if the game is not paused"
+  bolted on. A rule part way through a wait carries on, so "pause, say
+  something, wait, start the game again" is a cutscene anyone can write.
+- Comparing one variable with another, and copying one into another:
+  `if score is more than high-score` / `then copy score into high-score`.
+  Deliberately two entries rather than an expression language. Before this,
+  every value anywhere in the vocabulary was a fixed number, so a best score
+  that survives a replay had no path at all.
+- A validation issue now carries a severity. An error is refused as before; a
+  warning is carried through and reported, so "legal, and almost certainly a
+  mistake" has somewhere to live. The editor applies the change and says what
+  is worth a look, the command line prints it under the summary, and an
+  assistant working over the Model Context Protocol gets it alongside the diff.
+- The first such warning: a rule that checks something about a group and then
+  acts on the whole group. `IF hits-left of tag:enemy is at most 0 THEN remove
+tag:enemy` reads as one enemy dying and removes every one of them, because
+  the check passes when any one matches and the action runs on all of them.
+- Every trigger, condition and action the engine advertises is now exercised by
+  a test, so a vocabulary entry cannot ship dead again.
 
 ### Changed
 
@@ -107,3 +133,27 @@ project file changes, and every change comes with a migration.
 - Picking "A property is" (or any dropdown choice whose starting point could
   not be filled in) threw inside the editor instead of doing anything; starting
   points are now checked and the refusal is explained in words.
+- "When something is removed" never fired. Not once, ever, though it was
+  documented, offered in the editor's dropdowns and in the blocks palette, and
+  had a PinScript sentence: the guard that skips a rule about a removed entity
+  was skipping every one of its firings.
+- A removed entity silently stopped being a place. "Remove the enemy, then drop
+  a coin where it was" dropped the coin at the top left corner of the level,
+  and writing the same two actions the other way round worked, so the order of
+  two lines quietly decided whether the game was right.
+- An anchor that pointed at nothing also fell back to the top left of the
+  level, so a rule meant to drop treasure beside the boss dropped it in the
+  corner. Naming nothing still means the corner; naming something absent now
+  does nothing.
+- "When two things stop touching" never fired if one of them had been removed,
+  so the ordinary pair of rules that tracks "am I standing in the fire" stayed
+  stuck on yes for the rest of the game.
+- "Turn off the rule" was forgotten whenever the level restarted or changed. A
+  rule's off switch now lives where the rule lives: one for the whole game
+  stays off across levels, while a level's own comes back with the level.
+- Leaving the level fired on every step spent outside it, so "when the player
+  falls out of the level, lose a life" spent three lives in the first fiftieth
+  of a second and kept going. It is an event now, not a place you are.
+- A wait was thrown away, without a word, by any change of level from any rule,
+  so the shape the documentation itself teaches for losing a game silently did
+  nothing whenever something else changed the level inside that pause.
