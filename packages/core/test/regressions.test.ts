@@ -7,8 +7,6 @@ import { makeGame, player, steps, stepUntil } from './helpers.js';
  * describes the wrong behaviour it guards against, not just the right one.
  */
 
-const RESTING_Y = 64;
-
 function platformPlayer(
   movement: Record<string, unknown> = {},
 ): NonNullable<ProjectInput['entities']> {
@@ -23,14 +21,7 @@ function platformPlayer(
 }
 
 describe('one-way platforms', () => {
-  const rows = [
-    '..........',
-    '..........',
-    '..........',
-    '..===.....',
-    '..........',
-    '##########',
-  ];
+  const rows = ['..........', '..........', '..........', '..===.....', '..........', '##########'];
   // The player starts under the platform, standing on the ground, so a full
   // jump carries it up through the platform from below.
   const below = [{ id: 'player-1', prototype: 'player', x: 32, y: 64 }];
